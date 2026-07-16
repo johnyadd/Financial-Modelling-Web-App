@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -85,7 +85,7 @@ export function SignupForm() {
           full_name: values.fullName,
           role:      values.role,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: "http://localhost:3000/auth/callback",
       },
     })
 
@@ -105,7 +105,7 @@ export function SignupForm() {
     }
 
     // Redirect to email verification page
-    router.push("/auth/verify")
+    router.push("/onboarding")
   }
 
   return (

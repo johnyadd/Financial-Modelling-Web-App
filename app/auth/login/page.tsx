@@ -1,3 +1,4 @@
+﻿import { Suspense } from "react"
 import { LoginForm } from "@/components/auth/login-form"
 import { Metadata } from "next"
 
@@ -17,7 +18,9 @@ export default function LoginPage() {
             Sign in to your FinModels UK account
           </p>
         </div>
-        <LoginForm />
+        <Suspense fallback={<div className="h-64 rounded-2xl border border-border animate-pulse bg-muted" />}>
+          <LoginForm />
+        </Suspense>
       </div>
     </main>
   )

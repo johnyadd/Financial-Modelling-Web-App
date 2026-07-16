@@ -1,3 +1,4 @@
+﻿import { Suspense } from "react"
 import { SignupForm } from "@/components/auth/signup-form"
 import { Metadata } from "next"
 
@@ -14,10 +15,12 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Get started with FinModels UK — free to begin
+            Get started with FinModels UK - free to begin
           </p>
         </div>
-        <SignupForm />
+        <Suspense fallback={<div className="h-96 rounded-2xl border border-border animate-pulse bg-muted" />}>
+          <SignupForm />
+        </Suspense>
       </div>
     </main>
   )
