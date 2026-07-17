@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -63,7 +63,7 @@ function ExtractedDataCard({ statement }: { statement: Statement }) {
   if (!data) return null
 
   const is = data.income_statement ?? {}
-  const years = (data.years as string[]) ?? []
+  const years = ((data.years as unknown) as string[]) ?? []
 
   const metrics = [
     { label: "Revenue",     values: is.revenue },
@@ -93,7 +93,7 @@ function ExtractedDataCard({ statement }: { statement: Statement }) {
               <td className="py-1.5 text-foreground font-medium">{label}</td>
               {(values as unknown[]).map((v, i) => (
                 <td key={i} className={cn("text-right py-1.5 px-2 tabular-nums", Number(v) < 0 ? "text-red-600" : "text-foreground")}>
-                  {v != null ? Number(v).toLocaleString() : "—"}
+                  {v != null ? Number(v).toLocaleString() : "â€”"}
                 </td>
               ))}
             </tr>
@@ -217,7 +217,7 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
                 Extracting financial data...
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                Our AI is reading your documents. This takes 15–30 seconds per file.
+                Our AI is reading your documents. This takes 15â€“30 seconds per file.
               </p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
           <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 px-4 py-3 mb-6 flex items-center gap-3">
             <CheckCircle2Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
-              Extraction complete — review the figures below and approve to continue
+              Extraction complete â€” review the figures below and approve to continue
             </p>
           </div>
         )}
@@ -334,3 +334,4 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
     </main>
   )
 }
+
