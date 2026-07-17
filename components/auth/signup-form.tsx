@@ -29,7 +29,7 @@ const signupSchema = z.object({
     .regex(/[A-Z]/, "Must contain at least one uppercase letter")
     .regex(/[0-9]/, "Must contain at least one number"),
   role:     z.enum(["startup_founder", "existing_business", "vendor"], {
-    required_error: "Please select your account type",
+    message: "Please select your account type",
   }),
 })
 
@@ -274,3 +274,4 @@ export function SignupForm() {
     </div>
   )
 }
+
