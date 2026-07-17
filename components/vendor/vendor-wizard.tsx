@@ -169,7 +169,8 @@ export function VendorWizard({ profile }: VendorWizardProps) {
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema) as any,
+    // @ts-expect-error - Zod default types conflict with FormData
+    resolver: zodResolver(schema),
     defaultValues: {
       currency: "GBP", country: "United Kingdom", projectionYears: "5",
       grossMargin: 70, cogsPercent: 30, depreciationRate: 25,
@@ -604,4 +605,5 @@ export function VendorWizard({ profile }: VendorWizardProps) {
     </main>
   )
 }
+
 
