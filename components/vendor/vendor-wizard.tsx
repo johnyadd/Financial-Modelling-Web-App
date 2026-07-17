@@ -276,7 +276,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(onSubmit as any)}>
 
             {/* â”€â”€ STEP 0: Client details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
             {step === 0 && (
@@ -605,6 +605,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
     </main>
   )
 }
+
 
 
 
