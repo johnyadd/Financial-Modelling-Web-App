@@ -68,14 +68,15 @@ export async function POST(request: NextRequest) {
 
     const adminClient = createAdminClient()
 
-    const outputColumn: Record<string, string> = {
+    const outputColumnMap: Record<string, string> = {
       pre_revenue_dcf: "dcf_output",
       dcf:             "dcf_output",
       three_statement: "three_statement",
       lbo:             "lbo_output",
       saas:            "saas_output",
       ma:              "ma_output",
-    }[modelInput.model_type] ?? "dcf_output"
+    }
+    const outputColumn = outputColumnMap[modelInput.model_type as string] ?? "dcf_output"
 
     const { data: output, error: outputError } = await adminClient
       .from("model_outputs")
@@ -108,4 +109,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error", detail: String(error) }, { status: 500 })
   }
 }
+
 
