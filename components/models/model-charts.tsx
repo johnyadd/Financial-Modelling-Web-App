@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import {
   BarChart,
@@ -16,7 +16,7 @@ import {
   LabelList,
 } from "recharts"
 
-// ── Helpers ───────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function shortFmt(value: number, currency = "GBP"): string {
   if (Math.abs(value) >= 1_000_000)
     return `${currency} ${(value / 1_000_000).toFixed(1)}m`
@@ -38,7 +38,7 @@ const CHART_COLOURS = {
   netIncome:  "#16A085",
 }
 
-// ── Custom tooltip ─────────────────────────────────────────────
+// â”€â”€ Custom tooltip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CustomTooltip({
   active,
   payload,
@@ -87,7 +87,7 @@ function PctTooltip({
   )
 }
 
-// ── Chart 1: Revenue & EBITDA Bar Chart ───────────────────────
+// â”€â”€ Chart 1: Revenue & EBITDA Bar Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface RevenueChartProps {
   pnl: Record<string, unknown>[]
   currency: string
@@ -134,7 +134,7 @@ export function RevenueEbitdaChart({ pnl, currency }: RevenueChartProps) {
   )
 }
 
-// ── Chart 2: Margin Progression Line Chart ────────────────────
+// â”€â”€ Chart 2: Margin Progression Line Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface MarginChartProps {
   pnl: Record<string, unknown>[]
 }
@@ -203,7 +203,7 @@ export function MarginProgressionChart({ pnl }: MarginChartProps) {
   )
 }
 
-// ── Chart 3: FCF Waterfall ────────────────────────────────────
+// â”€â”€ Chart 3: FCF Waterfall â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface FCFChartProps {
   fcfSchedule: number[]
   currency: string
@@ -219,7 +219,7 @@ export function FCFChart({ fcfSchedule, currency }: FCFChartProps) {
   return (
     <div>
       <p className="text-xs text-muted-foreground mb-3">
-        Free Cash Flow by year — green = positive, red = negative ({currency})
+        Free Cash Flow by year â€” green = positive, red = negative ({currency})
       </p>
       <ResponsiveContainer width="100%" height={240}>
         <BarChart data={data} margin={{ top: 10, right: 20, left: 20, bottom: 5 }}>
@@ -239,7 +239,7 @@ export function FCFChart({ fcfSchedule, currency }: FCFChartProps) {
             <LabelList
               dataKey="FCF"
               position="top"
-              formatter={(v: number) => shortFmt(v, currency)}
+              formatter={(v) => shortFmt(Number(v), currency)}
               style={{ fontSize: 9, fill: "var(--muted-foreground)" }}
             />
           </Bar>
@@ -249,7 +249,7 @@ export function FCFChart({ fcfSchedule, currency }: FCFChartProps) {
   )
 }
 
-// ── Chart 4: Scenario Comparison ──────────────────────────────
+// â”€â”€ Chart 4: Scenario Comparison â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface ScenarioChartProps {
   scenarios: Record<string, Record<string, unknown>>
   currency: string
@@ -306,7 +306,7 @@ export function ScenarioChart({ scenarios, currency }: ScenarioChartProps) {
   )
 }
 
-// ── Chart 5: Revenue Growth Line ──────────────────────────────
+// â”€â”€ Chart 5: Revenue Growth Line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface RevenueGrowthChartProps {
   pnl: Record<string, unknown>[]
   currency: string
@@ -372,3 +372,4 @@ export function RevenueGrowthChart({ pnl, currency }: RevenueGrowthChartProps) {
     </div>
   )
 }
+
