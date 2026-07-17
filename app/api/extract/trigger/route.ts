@@ -29,7 +29,7 @@ async function fromPdf(b64: string) {
 
 async function xlsxToText(buf: ArrayBuffer): Promise<string> {
   const wb = new ExcelJS.Workbook()
-  await wb.xlsx.load(Buffer.from(buf) as unknown as Buffer)
+  await wb.xlsx.load(Buffer.from(buf) as any)
   let text = ""
   wb.eachSheet((sheet) => {
     text += `\n\n=== ${sheet.name} ===\n`
@@ -107,4 +107,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error", detail: String(error) }, { status: 500 })
   }
 }
+
 
