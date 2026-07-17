@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const adminClient = createAdminClient()
 
-    const outputColumn = {
+    const outputColumn: Record<string, string> = {
       pre_revenue_dcf: "dcf_output",
       dcf:             "dcf_output",
       three_statement: "three_statement",
@@ -108,3 +108,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error", detail: String(error) }, { status: 500 })
   }
 }
+
