@@ -193,7 +193,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
         name: `${data.clientName} â€” ${MODEL_OPTIONS.find(m => m.value === data.modelType)?.label ?? data.modelType}`,
         step1: {
           businessName: data.clientName, industry: data.industry, currency: data.currency,
-          country: data.country, businessStage: data.fundingStage,
+          country: data.country, businessStage: "Established (Profitable)",
         },
         step2: {
           revenueModel: data.revenueModel, projectionYears: `${data.projectionYears} years`,
@@ -605,6 +605,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
     </main>
   )
 }
+
 
 
 
