@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (extracted.length > 0) {
       const p = extracted[0] as Record<string, Record<string, unknown[]>>
       const is = p?.income_statement ?? {}; const bs = p?.balance_sheet ?? {}; const cf = p?.cash_flow ?? {}
-      const years = (p?.years as string[]) ?? []; const li = Math.max((years.length ?? 1) - 1, 0)
+      const years = ((p?.years as unknown) as string[]) ?? []; const li = Math.max((years.length ?? 1) - 1, 0)
       const last = (a: unknown[]) => typeof a?.[li] === "number" ? a[li] as number : 0
       const gr = (a: unknown[]) => { if (!a || a.length < 2) return 0; const pv = Number(a[a.length-2]); const cv = Number(a[a.length-1]); return pv === 0 ? 0 : ((cv-pv)/Math.abs(pv))*100 }
       const rev = is.revenue as number[] ?? []; const cogs = is.cost_of_goods_sold as number[] ?? []; const ebitda = is.ebitda as number[] ?? []
@@ -107,5 +107,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error", detail: String(error) }, { status: 500 })
   }
 }
+
 
 
