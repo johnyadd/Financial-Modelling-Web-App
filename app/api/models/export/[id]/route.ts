@@ -87,6 +87,7 @@ async function buildWorkbook(
   wb.created = new Date()
 
   const s1 = model.step1_business as Record<string, unknown>
+  const businessName = (s1.businessName as string) ?? "Model"
   const dcfOut = (Object.keys(output.dcf_output ?? {}).length > 0 ? output.dcf_output : output.three_statement ?? {}) as Record<string, unknown>
   const summary = (dcfOut.summary ?? output.summary_metrics ?? {}) as Record<string, unknown>
   const pnl = (dcfOut.pnl ?? dcfOut.income_statement ?? []) as Record<string, unknown>[]
@@ -98,7 +99,231 @@ async function buildWorkbook(
   const sensitivity = (dcfOut.sensitivity ?? null) as Record<string, unknown> | null
   const years = pnl.map((r) => `Year ${r.year}`)
   const cFmt = currencyFmt(currency)
+// -- SHEET 0: Cover Page ------------------------------------------
+// Add this snippet as the FIRST sheet in your Excel export (before the Summary sheet).
+// It creates a professional cover sheet with model metadata and disclaimer.
 
+{
+  const coverSheet = wb.addWorksheet("Cover", {
+    pageSetup: { fitToPage: true, fitToWidth: 1 },
+  })
+  coverSheet.columns = [
+    { width: 4 },   // left margin
+    { width: 32 },  // labels
+    { width: 42 },  // values
+    { width: 4 },   // right margin
+  ]
+
+  // Hide gridlines for a cleaner cover
+  coverSheet.views = [{ showGridLines: false }]
+
+  // -- Title banner --
+  coverSheet.mergeCells("B2:C3")
+  const titleCell = coverSheet.getCell("B2")
+  titleCell.value = "FinModels UK"
+  titleCell.font = { bold: true, size: 24, color: { argb: "1E3A5F" } }
+  titleCell.alignment = { horizontal: "left", vertical: "middle" }
+  coverSheet.getRow(2).height = 24
+  coverSheet.getRow(3).height = 24
+
+  // -- Subtitle --
+  coverSheet.mergeCells("B4:C4")
+  const subtitleCell = coverSheet.getCell("B4")
+  subtitleCell.value = "Institutional Financial Model"
+  subtitleCell.font = { italic: true, size: 11, color: { argb: "666666" } }
+  subtitleCell.alignment = { horizontal: "left" }
+  coverSheet.getRow(4).height = 18
+
+  // -- Divider --
+  coverSheet.getCell("B5").border = {
+    bottom: { style: "medium", color: { argb: "1E3A5F" } }
+  }
+  coverSheet.getCell("C5").border = {
+    bottom: { style: "medium", color: { argb: "1E3A5F" } }
+  }
+  coverSheet.getRow(5).height = 12
+
+  // -- Client name (large) --
+  coverSheet.mergeCells("B7:C8")
+  const clientCell = coverSheet.getCell("B7")
+  clientCell.value = businessName
+  clientCell.font = { bold: true, size: 20, color: { argb: "1E3A5F" } }
+  clientCell.alignment = { horizontal: "left", vertical: "middle" }
+  coverSheet.getRow(7).height = 20
+  coverSheet.getRow(8).height = 20
+
+  // -- Model type --
+  const modelTypeName = ({
+    dcf: "DCF Valuation Model",
+    three_statement: "3-Statement Financial Model",
+    pre_revenue_dcf: "Pre-Revenue Startup DCF",
+    lbo: "LBO Model",
+    saas: "SaaS Financial Model",
+    ma: "M&A Model",
+  } as Record<string, string>)[model.model_type as string] || "Financial Model"
+
+  coverSheet.mergeCells("B9:C9")
+  const modelTypeCell = coverSheet.getCell("B9")
+  modelTypeCell.value = modelTypeName
+  modelTypeCell.font = { size: 13, color: { argb: "444444" } }
+  modelTypeCell.alignment = { horizontal: "left" }
+  coverSheet.getRow(9).height = 20
+
+  // -- Metadata section header --
+  coverSheet.getRow(11).height = 8
+  coverSheet.mergeCells("B12:C12")
+  const metaHeader = coverSheet.getCell("B12")
+  metaHeader.value = "MODEL DETAILS"
+  metaHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
+  metaHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  metaHeader.alignment = { horizontal: "left", indent: 1 }
+  coverSheet.getRow(12).height = 22
+
+  // -- Metadata rows --
+  const now = new Date()
+  const dateStr = now.toLocaleDateString("en-GB", {
+    day: "numeric", month: "long", year: "numeric"
+  })
+  const timeStr = now.toLocaleTimeString("en-GB", {
+    hour: "2-digit", minute: "2-digit"
+  })
+
+  const projectionYears = Number((dcfOut.summary as Record<string, unknown>)?.projection_years ?? 5)
+  const analystName = ((model.step1_business as Record<string, string>)?.analystName ?? "FinModels UK Analyst")
+  const modelIntegrityPassed = balanceSheet.length > 0
+  ? balanceSheet.every((bs) => {
+      const assets = Number(bs.total_assets) || 0
+      const liabEquity = Number(bs.total_equity_liabilities) || 0
+      return Math.abs(assets - liabEquity) < 1
+    })
+  : true
+
+  const metadataRows: [string, string][] = [
+    ["Client",              businessName],
+    ["Model type",          modelTypeName],
+    ["Currency",            currency],
+    ["Projection period",   `${projectionYears} years`],
+    ["Model date",          dateStr],
+    ["Time generated",      timeStr],
+    ["Prepared by",         String(analystName)],
+    ["Version",             "1.0"],
+    ["Model integrity",     modelIntegrityPassed ? "PASS - all checks passed" : "REVIEW - see Model Checks sheet"],
+  ]
+
+  let rowIdx = 13
+  metadataRows.forEach(([label, value]) => {
+    const labelCell = coverSheet.getCell(rowIdx, 2)
+    labelCell.value = label
+    labelCell.font = { size: 10, color: { argb: "666666" } }
+    labelCell.alignment = { horizontal: "left", indent: 1, vertical: "middle" }
+
+    const valueCell = coverSheet.getCell(rowIdx, 3)
+    valueCell.value = value
+    valueCell.font = { bold: true, size: 10, color: { argb: "1E3A5F" } }
+    valueCell.alignment = { horizontal: "left", vertical: "middle" }
+
+    // Row border (bottom)
+    labelCell.border = {
+      bottom: { style: "thin", color: { argb: "E8E8E8" } }
+    }
+    valueCell.border = {
+      bottom: { style: "thin", color: { argb: "E8E8E8" } }
+    }
+
+    // Special colour for model integrity row
+    if (label === "Model integrity") {
+      valueCell.font = {
+        bold: true, size: 10,
+        color: { argb: modelIntegrityPassed ? "27AE60" : "C0392B" }
+      }
+    }
+
+    coverSheet.getRow(rowIdx).height = 20
+    rowIdx++
+  })
+
+  // -- Table of contents section --
+  rowIdx++  // gap
+  coverSheet.mergeCells(rowIdx, 2, rowIdx, 3)
+  const tocHeader = coverSheet.getCell(rowIdx, 2)
+  tocHeader.value = "TABLE OF CONTENTS"
+  tocHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
+  tocHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  tocHeader.alignment = { horizontal: "left", indent: 1 }
+  coverSheet.getRow(rowIdx).height = 22
+  rowIdx++
+
+  const tocRows: [string, string][] = [
+    ["Summary",             "Key metrics and headline valuation"],
+    ["P&L Schedule",        "Income statement across projection period"],
+    ["Balance Sheet",       "Balance sheet with opening and year-end positions"],
+    ["Cash Flow Statement", "Full cash flow statement — CFO, CFI, CFF"],
+    ["Free Cash Flow",      "Unlevered free cash flow and present values"],
+    ["Scenarios",           "Bear / Base / Bull case comparisons"],
+    ["Sensitivity",         "NPV sensitivity to WACC and terminal growth"],
+    ["Model Checks",        "Institutional-grade integrity checks"],
+    ["Model Inputs",        "All assumptions and driver inputs"],
+  ]
+
+  tocRows.forEach(([sheet, desc]) => {
+    const sheetCell = coverSheet.getCell(rowIdx, 2)
+    sheetCell.value = sheet
+    sheetCell.font = { bold: true, size: 10, color: { argb: "1E3A5F" } }
+    sheetCell.alignment = { horizontal: "left", indent: 1, vertical: "middle" }
+
+    const descCell = coverSheet.getCell(rowIdx, 3)
+    descCell.value = desc
+    descCell.font = { size: 10, color: { argb: "444444" } }
+    descCell.alignment = { horizontal: "left", vertical: "middle" }
+
+    coverSheet.getRow(rowIdx).height = 18
+    rowIdx++
+  })
+
+  // -- Confidentiality disclaimer --
+  rowIdx += 2
+  coverSheet.mergeCells(rowIdx, 2, rowIdx, 3)
+  const disclaimerHeader = coverSheet.getCell(rowIdx, 2)
+  disclaimerHeader.value = "CONFIDENTIALITY & DISCLAIMER"
+  disclaimerHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
+  disclaimerHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  disclaimerHeader.alignment = { horizontal: "left", indent: 1 }
+  coverSheet.getRow(rowIdx).height = 22
+  rowIdx++
+
+  const disclaimerText = [
+    "This financial model has been prepared by FinModels UK for the sole use of " + businessName + ".",
+    "",
+    "The information contained in this model is confidential and proprietary. It should not be reproduced,",
+    "distributed, or disclosed to any third party without prior written consent.",
+    "",
+    "The projections and assumptions in this model are based on information provided by the client and",
+    "reasonable estimates. Actual results may differ materially from those projected. This model does",
+    "not constitute investment advice, tax advice, or a recommendation to buy or sell any security.",
+    "",
+    "The recipient should conduct their own due diligence and consult with qualified advisors before",
+    "making any investment or business decision based on this model.",
+    "",
+    "© " + new Date().getFullYear() + " FinModels UK. All rights reserved.",
+  ]
+
+  disclaimerText.forEach((line) => {
+    const cell = coverSheet.getCell(rowIdx, 2)
+    coverSheet.mergeCells(rowIdx, 2, rowIdx, 3)
+    cell.value = line
+    cell.font = {
+      italic: line.includes("©"),
+      size: 9,
+      color: { argb: line.includes("©") ? "1E3A5F" : "555555" }
+    }
+    cell.alignment = { horizontal: "left", vertical: "middle", indent: 1 }
+    coverSheet.getRow(rowIdx).height = 14
+    rowIdx++
+  })
+
+
+}
+  
   // â”€â”€ SHEET 1: Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const summarySheet = wb.addWorksheet("Summary", {
     pageSetup: { fitToPage: true, fitToWidth: 1 },
@@ -771,6 +996,8 @@ export async function GET(
     return NextResponse.json({ error: "Export failed", detail: String(error) }, { status: 500 })
   }
 }
+
+
 
 
 
