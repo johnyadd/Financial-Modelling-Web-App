@@ -428,7 +428,203 @@ async function buildWorkbook(
     const legendRow = sensSheet.addRow(["â˜… Yellow = Base case"])
     legendRow.getCell(1).font = { italic: true, size: 9, color: { argb: "856404" } }
   }
+  
+// -- SHEET INTEGRITY CHECKS: Model Checks --------------------------------
+// Add this snippet to your Excel export route before the Model Inputs sheet section.
+// It creates a dedicated "Model Checks" sheet with pass/fail indicators.
 
+if (balanceSheet.length > 0 && cashFlow.length > 0) {
+  const checksSheet = wb.addWorksheet("Model Checks")
+  checksSheet.columns = [
+    { width: 42 },  // Check name
+    { width: 14 },  // Threshold
+    ...balanceSheet.map(() => ({ width: 16 })),  // one per year
+    { width: 12 },  // Status
+  ]
+
+  // Header row
+  const checksHdrRow = checksSheet.addRow([
+    "Model Integrity Check", "Tolerance",
+    ...balanceSheet.map((r) => `Year ${r.year}`),
+    "Status"
+  ])
+  applyHeaderStyle(checksHdrRow, COLOURS.headerBg, COLOURS.headerFg, 12)
+  checksSheet.getRow(1).height = 24
+
+  // Title banner
+  checksSheet.mergeCells(2, 1, 2, balanceSheet.length + 3)
+  const bannerCell = checksSheet.getCell(2, 1)
+  bannerCell.value = "Institutional-grade accounting integrity checks — all should pass"
+  bannerCell.font = { italic: true, color: { argb: "666666" }, size: 10 }
+  bannerCell.alignment = { horizontal: "center" }
+  checksSheet.getRow(2).height = 18
+
+  // Helper to add a check row with pass/fail indicator
+  function addCheckRow(
+    label: string,
+    tolerance: string,
+    values: number[],
+    passIfAllUnder: number
+  ) {
+    const rowValues = [label, tolerance, ...values]
+    const allPass = values.every((v) => Math.abs(v) <= passIfAllUnder)
+    rowValues.push(allPass ? "PASS" : "FAIL")
+    const row = checksSheet.addRow(rowValues)
+
+    // Style values (year columns) — colour by pass/fail
+    values.forEach((v, i) => {
+      const cell = row.getCell(i + 3)
+      cell.numFmt = "#,##0.0;[Red]-#,##0.0"
+      cell.alignment = { horizontal: "right" }
+      if (Math.abs(v) > passIfAllUnder) {
+        cell.font = { color: { argb: "C0392B" }, bold: true }
+      } else {
+        cell.font = { color: { argb: "27AE60" } }
+      }
+    })
+
+    // Status cell
+    const statusCell = row.getCell(balanceSheet.length + 3)
+    statusCell.alignment = { horizontal: "center" }
+    statusCell.font = { bold: true, color: { argb: "FFFFFF" } }
+    statusCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: allPass ? "27AE60" : "C0392B" },
+    }
+
+    // Label styling
+    row.getCell(1).font = { bold: true, size: 10 }
+    row.getCell(2).font = { italic: true, size: 9, color: { argb: "666666" } }
+    row.getCell(2).alignment = { horizontal: "center" }
+  }
+
+  // === CHECK 1: Balance sheet balances (Assets = Liabilities + Equity) ===
+  const bsBalanceDiffs = balanceSheet.map((bs) => {
+    const assets = Number(bs.total_assets) || 0
+    const liabEquity = Number(bs.total_equity_liabilities) || 0
+    return assets - liabEquity
+  })
+  addCheckRow(
+    "Balance Sheet: Assets = Liabilities + Equity",
+    "< 1",
+    bsBalanceDiffs,
+    1
+  )
+
+  // === CHECK 2: Cash flow reconciliation ===
+  // Opening cash + Net cash flow = Closing cash
+  const cashReconDiffs = cashFlow.map((cf) => {
+    const opening = Number(cf.opening_cash ?? 0)
+    const netCF = Number(cf.net_cash_flow) || 0
+    const closing = Number(cf.closing_cash) || 0
+    return (opening + netCF) - closing
+  })
+  addCheckRow(
+    "Cash Flow: Opening + Net CF = Closing",
+    "< 1",
+    cashReconDiffs,
+    1
+  )
+
+  // === CHECK 3: Retained earnings continuity ===
+  // Prior RE + Net Income = Current RE
+  const reContinuityDiffs = balanceSheet.map((bs, i) => {
+    const priorRE = i === 0 ? 0 : (Number(balanceSheet[i - 1].retained_earnings) || 0)
+    const netIncome = Number(pnl[i]?.net_income) || 0
+    const currentRE = Number(bs.retained_earnings) || 0
+    return (priorRE + netIncome) - currentRE
+  })
+  addCheckRow(
+    "Retained Earnings: Prior + NI = Ending",
+    "< 1",
+    reContinuityDiffs,
+    1
+  )
+
+  // === CHECK 4: Fixed assets roll ===
+  // Prior FA + Capex - Depreciation = Current FA
+  const openingFA = Number((dcfOut.opening_balance_sheet as Record<string, unknown>)?.fixed_assets ?? 0) || 0
+  const faRollDiffs = balanceSheet.map((bs, i) => {
+    const priorFA = i === 0 ? openingFA : (Number(balanceSheet[i - 1].fixed_assets) || 0)
+    const capex = Math.abs(Number(cashFlow[i]?.capex) || 0)
+    const depreciation = Number(pnl[i]?.depreciation) || 0
+    const currentFA = Number(bs.fixed_assets) || 0
+    return (priorFA + capex - depreciation) - currentFA
+  })
+  addCheckRow(
+    "Fixed Assets: Prior + Capex - Dep = Ending",
+    "< 1",
+    faRollDiffs,
+    1
+  )
+
+  // === CHECK 5: Debt schedule ===
+  // Prior Debt - Repayment = Current Debt
+  const openingDebt = Number((dcfOut.opening_balance_sheet as Record<string, unknown>)?.debt ?? 0) || 0
+  const debtRollDiffs = balanceSheet.map((bs, i) => {
+    const priorDebt = i === 0 ? openingDebt : (Number(balanceSheet[i - 1].debt) || 0)
+    const repayment = Math.abs(Number(cashFlow[i]?.debt_repayment) || 0)
+    const currentDebt = Number(bs.debt) || 0
+    return (priorDebt - repayment) - currentDebt
+  })
+  addCheckRow(
+    "Debt: Prior - Repayment = Ending",
+    "< 1",
+    debtRollDiffs,
+    1
+  )
+
+  // === Summary section ===
+  checksSheet.addRow([])
+  const summaryRow = checksSheet.addRow(["OVERALL MODEL INTEGRITY"])
+  summaryRow.getCell(1).font = { bold: true, size: 12, color: { argb: "FFFFFF" } }
+  summaryRow.getCell(1).fill = {
+    type: "pattern", pattern: "solid",
+    fgColor: { argb: COLOURS.headerBg }
+  }
+  checksSheet.mergeCells(summaryRow.number, 1, summaryRow.number, balanceSheet.length + 3)
+  summaryRow.height = 24
+  summaryRow.getCell(1).alignment = { horizontal: "center" }
+
+  const allChecksPass =
+    bsBalanceDiffs.every((v) => Math.abs(v) <= 1) &&
+    cashReconDiffs.every((v) => Math.abs(v) <= 1) &&
+    reContinuityDiffs.every((v) => Math.abs(v) <= 1) &&
+    faRollDiffs.every((v) => Math.abs(v) <= 1) &&
+    debtRollDiffs.every((v) => Math.abs(v) <= 1)
+
+  const finalRow = checksSheet.addRow([
+    allChecksPass
+      ? "Model passes all institutional-grade accounting checks."
+      : "Model has integrity issues — review failed checks above."
+  ])
+  finalRow.getCell(1).font = {
+    bold: true,
+    size: 11,
+    color: { argb: allChecksPass ? "27AE60" : "C0392B" }
+  }
+  finalRow.getCell(1).alignment = { horizontal: "center" }
+  checksSheet.mergeCells(finalRow.number, 1, finalRow.number, balanceSheet.length + 3)
+  finalRow.height = 22
+
+  // Notes section
+  checksSheet.addRow([])
+  const notesTitle = checksSheet.addRow(["Reading the checks"])
+  notesTitle.getCell(1).font = { bold: true, size: 10 }
+  const notes = [
+    "Each check computes a residual — the difference between the two sides of an accounting equation.",
+    "PASS means every year's residual is within £1 (rounding tolerance).",
+    "FAIL means at least one year has a material residual — investigate before relying on the model.",
+    "Institutional models are expected to pass all five checks by construction.",
+  ]
+  notes.forEach((n) => {
+    const r = checksSheet.addRow([n])
+    r.getCell(1).font = { italic: true, size: 9, color: { argb: "666666" } }
+  })
+}
+
+  
   // â”€â”€ SHEET 6: Inputs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const inputSheet = wb.addWorksheet("Model Inputs")
   inputSheet.columns = [{ width: 30 }, { width: 28 }]
@@ -575,6 +771,8 @@ export async function GET(
     return NextResponse.json({ error: "Export failed", detail: String(error) }, { status: 500 })
   }
 }
+
+
 
 
 
