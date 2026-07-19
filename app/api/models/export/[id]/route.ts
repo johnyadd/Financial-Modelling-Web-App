@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import ExcelJS from "exceljs"
+import { getExportableAssumptions, SECTION_TITLES, type AssumptionDefinition, type AssumptionSection } from "@/lib/schemas/assumptions"
 
 // â”€â”€ Colour palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const COLOURS = {
@@ -861,75 +862,126 @@ if (balanceSheet.length > 0 && cashFlow.length > 0) {
   const s3 = model.step3_costs  as Record<string, unknown>
   const s4 = model.step4_funding as Record<string, unknown>
 
-  const inputSections = [
-    {
-      title: "Business Information",
-      rows: [
-        ["Business name",   s1.businessName],
-        ["Industry",        s1.industry],
-        ["Sub-sector",      s1.subSector],
-        ["Business stage",  s1.businessStage],
-        ["Country",         s1.country],
-        ["Currency",        s1.currency],
-      ],
-    },
-    {
-      title: "Revenue Assumptions",
-      rows: [
-        ["Revenue model",     s2.revenueModel],
-        ["Projection period", s2.projectionYears],
-        ["Year 1 revenue",    s2.year1Revenue],
-        ["Year 2 revenue",    s2.year2Revenue],
-        ["Year 3 revenue",    s2.year3Revenue],
-        ["Y1 growth %",       s2.revenueGrowthY1],
-        ["Y2 growth %",       s2.revenueGrowthY2],
-        ["Y3 growth %",       s2.revenueGrowthY3],
-        ["Annual churn %",    s2.churnRate],
-      ],
-    },
-    {
-      title: "Cost Structure",
-      rows: [
-        ["Gross margin %",    s3.grossMargin],
-        ["COGS %",            s3.cogsPercent],
-        ["Total payroll",     s3.salariesTotal],
-        ["Marketing %",       s3.marketingBudgetPct],
-        ["R&D %",             s3.rdBudgetPct],
-        ["Cloud infra (mo)",  s3.cloudInfraMonthly],
-        ["Office rent (mo)",  s3.officeRentMonthly],
-        ["EBITDA margin Y1",  s3.ebitdaMarginY1],
-        ["EBITDA margin Y3",  s3.ebitdaMarginY3],
-        ["CAPEX Year 1",      s3.capexY1],
-        ["Depreciation %",    s3.depreciationRate],
-      ],
-    },
-    {
-      title: "Funding & Exit",
-      rows: [
-        ["Funding stage",       s4.fundingStage],
-        ["Total raised",        s4.totalFundingRaised],
-        ["Current cash",        s4.currentCash],
-        ["Monthly burn rate",   s4.monthlyBurnRate],
-        ["Runway (months)",     s4.runwayMonths],
-        ["Target raise",        s4.targetRaiseAmount],
-        ["Discount rate %",     s4.discountRate],
-        ["Terminal growth %",   s4.terminalGrowthRate],
-        ["Exit horizon",        s4.exitHorizonYears],
-        ["Target exit multiple", s4.targetExitMultiple],
-      ],
-    },
-  ]
+// STAGE 1 — STEP 2 — Refactor Model Inputs sheet to read from central schema
+// This replaces the current inputSections block with schema-driven generation.
 
-  inputSections.forEach(({ title, rows }) => {
-    inputSheet.addRow([])
-    addSectionTitle(inputSheet, title, 2)
-    rows.forEach(([label, value]) => {
-      if (value == null || value === "") return
-      const row = inputSheet.addRow([label, value])
-      applyDataRowStyle(row)
-      row.getCell(1).font = { bold: true, size: 10 }
-    })
+// PART 1: Add this import at the TOP of the file (near the other imports)
+// ─────────────────────────────────────────────────────────────────────────
+
+
+// PART 2: REPLACE the current inputSections block and its forEach loop
+// with the code below. Find this line to know where to start:
+//    const inputSections: Array<{
+// and delete everything through the end of the forEach loop closing '})'
+// ─────────────────────────────────────────────────────────────────────────
+
+// Build a lookup of user-submitted values from all four step sections
+const submittedValues: Record<string, unknown> = {
+  ...(s1 as Record<string, unknown>),
+  ...(s2 as Record<string, unknown>),
+  ...(s3 as Record<string, unknown>),
+  ...(s4 as Record<string, unknown>),
+}
+
+// Get all assumptions that should appear in the export, grouped by section
+const exportableAssumptions = getExportableAssumptions()
+
+// Also include non-cellName assumptions for display (business info, enums)
+const allDisplayAssumptions = [
+  ...exportableAssumptions,
+  // Also add business/info fields that don't have cellName but should appear
+]
+
+// Group by section - respecting SECTION_TITLES order
+const sectionOrder: AssumptionSection[] = [
+  "business", "revenue", "costs", "workingCapital", "funding", "debt", "valuation", "tax", "exit"
+]
+
+sectionOrder.forEach((sectionKey) => {
+  // Get all assumptions for this section (including display-only ones)
+  const sectionAssumptions = [...exportableAssumptions].filter(
+    (a) => a.section === sectionKey
+  )
+
+  // Add business info section from step1 even without cellName
+  if (sectionKey === "business") {
+    const businessFields = ["businessName", "industry", "subSector", "businessStage", "country", "currency"]
+    const businessAssumptions = businessFields
+      .map(key => ({
+        key,
+        label: {
+          businessName: "Business name",
+          industry: "Industry",
+          subSector: "Sub-sector",
+          businessStage: "Business stage",
+          country: "Country",
+          currency: "Currency",
+        }[key] || key,
+        section: "business" as AssumptionSection,
+        applicableModels: [],
+        type: "string" as const,
+        required: false,
+        description: "",
+      } as AssumptionDefinition))
+    sectionAssumptions.unshift(...businessAssumptions)
+  }
+
+  if (sectionAssumptions.length === 0) return
+
+  // Filter to only assumptions that have a value
+  const rowsToWrite = sectionAssumptions.filter(a => {
+    const value = submittedValues[a.key]
+    return value !== null && value !== undefined && value !== ""
   })
+
+  if (rowsToWrite.length === 0) return
+
+  // Add section title
+  inputSheet.addRow([])
+  addSectionTitle(inputSheet, SECTION_TITLES[sectionKey], 2)
+
+  // Add each assumption row
+  rowsToWrite.forEach((assumption) => {
+    const rawValue = submittedValues[assumption.key]
+    const row = inputSheet.addRow([assumption.label, rawValue])
+    applyDataRowStyle(row)
+    row.getCell(1).font = { bold: true, size: 10 }
+
+    const valueCell = row.getCell(2)
+
+    // Coerce string values to numbers for numeric types (Supabase JSONB stores form values as strings)
+    const numericTypes = ["percentage", "currency", "multiple", "days", "years", "number"]
+    if (numericTypes.includes(assumption.type)) {
+      const num = typeof rawValue === "string" ? parseFloat(rawValue) : Number(rawValue)
+      if (!isNaN(num)) {
+        valueCell.value = num
+        if (assumption.type === "percentage") {
+          valueCell.value = num / 100
+          valueCell.numFmt = "0.0%"
+        } else if (assumption.type === "currency") {
+          valueCell.numFmt = cFmt
+        } else if (assumption.type === "multiple") {
+          valueCell.numFmt = '0.0"x"'
+        } else if (assumption.type === "days" || assumption.type === "years") {
+          valueCell.numFmt = "0"
+        } else {
+          valueCell.numFmt = "#,##0"
+        }
+      }
+    }
+
+    // Register the named cell for cross-sheet formula references
+    // This is the key institutional feature - other sheets can now write =in_growthY1
+    if (assumption.cellName) {
+      const cellRef = `'Model Inputs'!$B$${row.number}`
+      try {
+        wb.definedNames.add(cellRef, assumption.cellName)
+      } catch (e) {
+        // Silent - name may already exist
+      }
+    }
+  })
+})
 
   return wb
 }
@@ -996,6 +1048,10 @@ export async function GET(
     return NextResponse.json({ error: "Export failed", detail: String(error) }, { status: 500 })
   }
 }
+
+
+
+
 
 
 
