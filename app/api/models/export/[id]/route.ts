@@ -82,6 +82,14 @@ async function buildWorkbook(
   model: Record<string, unknown>,
   output: Record<string, unknown>,
   currency: string,
+  branding?: {
+    firm_name?: string | null
+    logo_url?: string | null
+    primary_color?: string | null
+    accent_color?: string | null
+    tagline?: string | null
+    disclaimer_text?: string | null
+  } | null,
 ): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook()
   wb.creator = "FinModels UK"
@@ -100,6 +108,13 @@ async function buildWorkbook(
   const sensitivity = (dcfOut.sensitivity ?? null) as Record<string, unknown> | null
   const years = pnl.map((r) => `Year ${r.year}`)
   const cFmt = currencyFmt(currency)
+
+  // Vendor branding (falls back to FinModels UK defaults)
+  const brandingHeaderColor = branding?.primary_color?.replace("#", "") || "1E3A5F"
+  const brandingAccentColor = branding?.accent_color?.replace("#", "") || "27AE60"
+  const brandingFirmName = branding?.firm_name || "FinModels UK"
+  const brandingTagline = branding?.tagline || "Institutional Financial Model"
+  const brandingDisclaimer = branding?.disclaimer_text || null
 // -- SHEET 0: Cover Page ------------------------------------------
 // Add this snippet as the FIRST sheet in your Excel export (before the Summary sheet).
 // It creates a professional cover sheet with model metadata and disclaimer.
@@ -121,8 +136,8 @@ async function buildWorkbook(
   // -- Title banner --
   coverSheet.mergeCells("B2:C3")
   const titleCell = coverSheet.getCell("B2")
-  titleCell.value = "FinModels UK"
-  titleCell.font = { bold: true, size: 24, color: { argb: "1E3A5F" } }
+  titleCell.value = brandingFirmName
+  titleCell.font = { bold: true, size: 24, color: { argb: brandingHeaderColor } }
   titleCell.alignment = { horizontal: "left", vertical: "middle" }
   coverSheet.getRow(2).height = 24
   coverSheet.getRow(3).height = 24
@@ -130,17 +145,17 @@ async function buildWorkbook(
   // -- Subtitle --
   coverSheet.mergeCells("B4:C4")
   const subtitleCell = coverSheet.getCell("B4")
-  subtitleCell.value = "Institutional Financial Model"
+  subtitleCell.value = brandingTagline
   subtitleCell.font = { italic: true, size: 11, color: { argb: "666666" } }
   subtitleCell.alignment = { horizontal: "left" }
   coverSheet.getRow(4).height = 18
 
   // -- Divider --
   coverSheet.getCell("B5").border = {
-    bottom: { style: "medium", color: { argb: "1E3A5F" } }
+    bottom: { style: "medium", color: { argb: brandingHeaderColor } }
   }
   coverSheet.getCell("C5").border = {
-    bottom: { style: "medium", color: { argb: "1E3A5F" } }
+    bottom: { style: "medium", color: { argb: brandingHeaderColor } }
   }
   coverSheet.getRow(5).height = 12
 
@@ -148,7 +163,7 @@ async function buildWorkbook(
   coverSheet.mergeCells("B7:C8")
   const clientCell = coverSheet.getCell("B7")
   clientCell.value = businessName
-  clientCell.font = { bold: true, size: 20, color: { argb: "1E3A5F" } }
+  clientCell.font = { bold: true, size: 20, color: { argb: brandingHeaderColor } }
   clientCell.alignment = { horizontal: "left", vertical: "middle" }
   coverSheet.getRow(7).height = 20
   coverSheet.getRow(8).height = 20
@@ -176,7 +191,7 @@ async function buildWorkbook(
   const metaHeader = coverSheet.getCell("B12")
   metaHeader.value = "MODEL DETAILS"
   metaHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
-  metaHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  metaHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandingHeaderColor } }
   metaHeader.alignment = { horizontal: "left", indent: 1 }
   coverSheet.getRow(12).height = 22
 
@@ -220,7 +235,7 @@ async function buildWorkbook(
 
     const valueCell = coverSheet.getCell(rowIdx, 3)
     valueCell.value = value
-    valueCell.font = { bold: true, size: 10, color: { argb: "1E3A5F" } }
+    valueCell.font = { bold: true, size: 10, color: { argb: brandingHeaderColor } }
     valueCell.alignment = { horizontal: "left", vertical: "middle" }
 
     // Row border (bottom)
@@ -235,7 +250,7 @@ async function buildWorkbook(
     if (label === "Model integrity") {
       valueCell.font = {
         bold: true, size: 10,
-        color: { argb: modelIntegrityPassed ? "27AE60" : "C0392B" }
+        color: { argb: modelIntegrityPassed ? brandingAccentColor : "C0392B" }
       }
     }
 
@@ -249,7 +264,7 @@ async function buildWorkbook(
   const tocHeader = coverSheet.getCell(rowIdx, 2)
   tocHeader.value = "TABLE OF CONTENTS"
   tocHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
-  tocHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  tocHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandingHeaderColor } }
   tocHeader.alignment = { horizontal: "left", indent: 1 }
   coverSheet.getRow(rowIdx).height = 22
   rowIdx++
@@ -269,7 +284,7 @@ async function buildWorkbook(
   tocRows.forEach(([sheet, desc]) => {
     const sheetCell = coverSheet.getCell(rowIdx, 2)
     sheetCell.value = sheet
-    sheetCell.font = { bold: true, size: 10, color: { argb: "1E3A5F" } }
+    sheetCell.font = { bold: true, size: 10, color: { argb: brandingHeaderColor } }
     sheetCell.alignment = { horizontal: "left", indent: 1, vertical: "middle" }
 
     const descCell = coverSheet.getCell(rowIdx, 3)
@@ -287,7 +302,7 @@ async function buildWorkbook(
   const disclaimerHeader = coverSheet.getCell(rowIdx, 2)
   disclaimerHeader.value = "CONFIDENTIALITY & DISCLAIMER"
   disclaimerHeader.font = { bold: true, size: 10, color: { argb: "FFFFFF" } }
-  disclaimerHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "1E3A5F" } }
+  disclaimerHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandingHeaderColor } }
   disclaimerHeader.alignment = { horizontal: "left", indent: 1 }
   coverSheet.getRow(rowIdx).height = 22
   rowIdx++
@@ -1048,6 +1063,9 @@ export async function GET(
     return NextResponse.json({ error: "Export failed", detail: String(error) }, { status: 500 })
   }
 }
+
+
+
 
 
 

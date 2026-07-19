@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -47,12 +47,17 @@ export function VendorDashboard({ profile, models }: VendorDashboardProps) {
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-1">Welcome back, {firstName}</h1>
             <p className="text-sm text-muted-foreground">
-              {models.length === 0 ? "Build your first client model below." : `${models.length} client model${models.length !== 1 ? "s" : ""} · ${complete} complete · ${pending} ready to run`}
+              {models.length === 0 ? "Build your first client model below." : `${models.length} client model${models.length !== 1 ? "s" : ""} Â· ${complete} complete Â· ${pending} ready to run`}
             </p>
           </div>
-          <Button className="gap-2" onClick={() => router.push("/vendor/new")}>
-            <PlusIcon className="w-4 h-4" />New client model
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => router.push("/vendor/settings")}>
+              Branding
+            </Button>
+            <Button className="gap-2" onClick={() => router.push("/vendor/new")}>
+              <PlusIcon className="w-4 h-4" />New client model
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -120,3 +125,4 @@ export function VendorDashboard({ profile, models }: VendorDashboardProps) {
     </main>
   )
 }
+
