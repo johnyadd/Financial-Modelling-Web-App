@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
 import { stripe, priceIdToTier } from "@/lib/stripe"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
           stripe_price_id: subscription.items.data[0].price.id,
           tier: tier || "founder",
           status: subscription.status,
-          current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+          current_period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : (subscription.items?.data?.[0]?.current_period_start ? new Date(subscription.items.data[0].current_period_start * 1000).toISOString() : null),
+          current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : (subscription.items?.data?.[0]?.current_period_end ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString() : null),
           cancel_at_period_end: subscription.cancel_at_period_end,
         }, { onConflict: "profile_id" })
 
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
             stripe_price_id: priceId,
             tier: tier,
             status: subscription.status,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : (subscription.items?.data?.[0]?.current_period_start ? new Date(subscription.items.data[0].current_period_start * 1000).toISOString() : null),
+            current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : (subscription.items?.data?.[0]?.current_period_end ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString() : null),
             cancel_at_period_end: subscription.cancel_at_period_end,
             canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000).toISOString() : null,
           })
@@ -110,3 +110,4 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
+
