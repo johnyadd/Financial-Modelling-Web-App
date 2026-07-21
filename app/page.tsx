@@ -1,19 +1,29 @@
-﻿import { LandingHero } from "@/components/landing/landing-hero"
-import { EntitySelector } from "@/components/landing/entity-selector"
+import { LandingHero } from "@/components/landing/landing-hero"
 import { TrustBar } from "@/components/landing/trust-bar"
+import { ProblemSolution } from "@/components/landing/problem-solution"
+import { AudienceSegments } from "@/components/landing/audience-segments"
+import { ModelRoadmap } from "@/components/landing/model-roadmap"
+import { EntitySelector } from "@/components/landing/entity-selector"
+import { LandingFAQ } from "@/components/landing/landing-faq"
+import { LandingCTA } from "@/components/landing/landing-cta"
 
 export const metadata = {
-  title: "FinModels UK — Financial Modelling for Every Stage",
+  title: "FinModels UK — Institutional Financial Models in Minutes",
   description:
-    "Professional financial models for UK startups and established businesses. DCF, 3-statement, LBO and more — generated in minutes.",
+    "Build professional financial models that pass institutional integrity checks. Purpose-built for UK founders, finance teams, and accounting firms. Multi-currency, AI-native.",
 }
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
       <LandingHero />
-      <EntitySelector />
       <TrustBar />
+      <ProblemSolution />
+      <AudienceSegments />
+      <ModelRoadmap />
+      <EntitySelector />
+      <LandingFAQ />
+      <LandingCTA />
     </main>
   )
 }
