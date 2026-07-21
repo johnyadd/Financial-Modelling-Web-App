@@ -1,8 +1,20 @@
 ﻿import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  
-  typescript: true,
+let _stripe: Stripe | null = null
+
+function getStripeInstance(): Stripe {
+  if (!_stripe) {
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", { typescript: true })
+  }
+  return _stripe
+}
+
+export const stripe = new Proxy({} as Stripe, {
+  get: (_target, prop) => {
+    const s = getStripeInstance()
+    const value = s[prop as keyof Stripe]
+    return typeof value === "function" ? (value as Function).bind(s) : value
+  }
 })
 
 // Tier configuration - single source of truth
@@ -102,4 +114,6 @@ export function priceIdToTier(priceId: string): Tier {
   if (priceId === process.env.STRIPE_PRICE_VENDOR_PRO) return "vendor_pro"
   return "free"
 }
+
+
 
