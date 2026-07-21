@@ -104,10 +104,13 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("Webhook handler error:", error)
+    const stack = error instanceof Error ? error.stack : ""
     return NextResponse.json({
       error: "Webhook processing failed",
-      detail: error instanceof Error ? error.message : String(error)
+      detail: error instanceof Error ? error.message : String(error),
+      stack: stack?.split("\n").slice(0, 5).join(" | ")
     }, { status: 500 })
   }
 }
+
 
