@@ -1,6 +1,7 @@
 ﻿import { createClient } from "@/lib/supabase/server"
 import { notFound, redirect } from "next/navigation"
 import { ModelDetail } from "@/components/models/model-detail"
+import { getUserSubscription } from "@/lib/subscription"
 
 interface ModelPageProps {
   params: Promise<{ id: string }>
@@ -47,5 +48,7 @@ export default async function ModelPage({ params }: ModelPageProps) {
     .limit(1)
     .maybeSingle()
 
-  return <ModelDetail model={model} output={output} />
+  const subscription = await getUserSubscription()
+  return <ModelDetail model={model} output={output} subscription={subscription} />
 }
+
