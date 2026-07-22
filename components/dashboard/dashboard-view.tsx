@@ -1,4 +1,5 @@
 ﻿"use client"
+import { useState } from "react"
 
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import {
   PlusIcon,
   FileSpreadsheetIcon,
   ClockIcon,
+  LockIcon,
   CheckCircle2Icon,
   TrendingUpIcon,
   RocketIcon,
@@ -160,10 +162,45 @@ function StatCard({
   )
 }
 
-export function DashboardView({ profile, models }: DashboardViewProps) {
+export function DashboardView({ profile, models, subscription }: DashboardViewProps) {
   const router = useRouter()
 
   const totalModels = models.length
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradingTier, setUpgradingTier] = useState<string | null>(null)
+  const maxModels = subscription?.maxModels ?? 1
+  const isAtLimit = maxModels !== -1 && totalModels >= maxModels
+  const isFree = !subscription || subscription.tier === "free"
+
+  async function handleUpgrade(tier: string) {
+    setUpgradingTier(tier)
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ tier }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert(data.error || "Failed to start checkout")
+        setUpgradingTier(null)
+      }
+    } catch (err) {
+      alert("Something went wrong. Please try again.")
+      setUpgradingTier(null)
+    }
+  }
+
+  function handleNewModelClick() {
+    if (isFree && isAtLimit) {
+      setShowUpgradeModal(true)
+      return
+    }
+    router.push("/questionnaire")
+  }
   const completeModels = models.filter((m) => m.input_status === "complete").length
   const pendingModels = models.filter((m) => m.input_status === "inputs_complete").length
   const startupModels = models.filter((m) => m.entity_type === "startup").length
@@ -203,10 +240,13 @@ export function DashboardView({ profile, models }: DashboardViewProps) {
             <Button
               size="sm"
               className="gap-2"
-              onClick={() => router.push("/questionnaire")}
-            >
-              <PlusIcon className="w-4 h-4" />
-              New model
+              onClick={handleNewModelClick}
+              >
+                {isFree && isAtLimit ? (
+                  <><LockIcon className="w-4 h-4" />New model</>
+                ) : (
+                  <><PlusIcon className="w-4 h-4" />New model</>
+                )}
             </Button>
           </div>
         </div>
@@ -317,6 +357,63 @@ export function DashboardView({ profile, models }: DashboardViewProps) {
         </div>
 
       </div>
+     {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowUpgradeModal(false)}>
+          <div className="bg-card rounded-2xl border border-border max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <LockIcon className="w-4 h-4 text-amber-500" />
+                  <span className="text-xs px-2 py-0.5 rounded-full border border-amber-300 text-amber-600 font-medium">Upgrade required</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground">You have reached the free tier limit</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Free tier includes 1 model. Upgrade to build unlimited models with full Excel exports.
+                </p>
+              </div>
+              <button onClick={() => setShowUpgradeModal(false)} className="p-2 rounded-md hover:bg-muted">
+                <PlusIcon className="w-4 h-4 rotate-45" />
+              </button>
+            </div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-xl border border-border p-5">
+                <h3 className="font-semibold text-foreground mb-2">Founder</h3>
+                <div className="mb-3">
+                  <span className="text-2xl font-bold text-foreground">GBP 29</span>
+                  <span className="text-sm text-muted-foreground"> /month</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">Unlimited models + full Excel exports</p>
+                <Button onClick={() => handleUpgrade("founder")} disabled={upgradingTier !== null} className="w-full" size="sm">
+                  {upgradingTier === "founder" ? "Loading..." : "Upgrade to Founder"}
+                </Button>
+              </div>
+              <div className="rounded-xl border-2 border-primary p-5 relative">
+                <span className="absolute -top-2 right-4 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">Popular for firms</span>
+                <h3 className="font-semibold text-foreground mb-2">Vendor Pro</h3>
+                <div className="mb-3">
+                  <span className="text-2xl font-bold text-foreground">GBP 99</span>
+                  <span className="text-sm text-muted-foreground"> /month</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">Everything + white-label + vendor portal</p>
+                <Button onClick={() => handleUpgrade("vendor_pro")} disabled={upgradingTier !== null} className="w-full" size="sm">
+                  {upgradingTier === "vendor_pro" ? "Loading..." : "Upgrade to Vendor Pro"}
+                </Button>
+              </div>
+            </div>
+            <div className="p-6 pt-2 text-center">
+              <button onClick={() => router.push("/pricing")} className="text-xs text-muted-foreground hover:text-foreground">See all plans</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </main>
   )
 }
+
+
+
+
+
+
+

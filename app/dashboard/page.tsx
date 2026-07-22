@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server"
+﻿import { createClient } from "@/lib/supabase/server"
+import { getUserSubscription } from "@/lib/subscription"
 import { redirect } from "next/navigation"
 import { DashboardView } from "@/components/dashboard/dashboard-view"
 import type { Metadata } from "next"
@@ -22,6 +23,8 @@ export default async function DashboardPage() {
     .eq("auth_user_id", user.id)
     .single()
 
+  const subscription = await getUserSubscription()
+
   // Fetch all models via the user_models view
   const { data: models } = await supabase
     .from("user_models")
@@ -32,6 +35,8 @@ export default async function DashboardPage() {
     <DashboardView
       profile={profile}
       models={models ?? []}
+      subscription={subscription}
     />
   )
 }
+
