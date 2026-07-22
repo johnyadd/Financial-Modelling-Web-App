@@ -317,8 +317,7 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
         {/* quick actions */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => router.push("/questionnaire")}
-            className="rounded-xl border border-border bg-card p-4 text-left hover:border-primary/40 hover:shadow-sm transition-all group"
+            onClick={handleNewModelClick} className="rounded-xl border border-border bg-card p-4 text-left hover:border-primary/40 hover:shadow-sm transition-all group"
           >
             <RocketIcon className="w-5 h-5 text-violet-600 dark:text-violet-400 mb-3" />
             <p className="font-medium text-sm text-foreground mb-1">
@@ -410,6 +409,9 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
     </main>
   )
 }
+
+
+
 
 
 
