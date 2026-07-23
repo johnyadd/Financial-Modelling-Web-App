@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { BenchmarkInput } from "@/components/ui/benchmark-input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -101,8 +102,9 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 // â”€â”€ Input helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function NumField({ control, name, label, placeholder, suffix }: {
-  control: any; name: keyof FormData; label: string; placeholder?: string; suffix?: string
+function NumField({ control, name, label, placeholder, suffix, assumptionKey, aiContext, setValue }: {
+  control: any; name: keyof FormData; label: string; placeholder?: string; suffix?: string;
+  assumptionKey?: string; aiContext?: any; setValue?: (v: string | number) => void;
 }) {
   return (
     <FormField control={control} name={name} render={({ field }) => (
@@ -110,8 +112,14 @@ function NumField({ control, name, label, placeholder, suffix }: {
         <FormLabel className="text-xs">{label}</FormLabel>
         <FormControl>
           <div className="relative">
-            <Input type="number" step="any" placeholder={placeholder ?? "0"} {...field} className={suffix ? "pr-10" : ""} />
-            {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{suffix}</span>}
+            {assumptionKey && aiContext && setValue ? (
+              <BenchmarkInput type="number" step="any" placeholder={placeholder ?? "0"} {...field} assumptionKey={assumptionKey} aiContext={aiContext} onAIAccept={setValue} className={suffix ? "pr-16" : ""} />
+            ) : (
+              <>
+                <Input type="number" step="any" placeholder={placeholder ?? "0"} {...field} className={suffix ? "pr-10" : ""} />
+                {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{suffix}</span>}
+              </>
+            )}
           </div>
         </FormControl>
         <FormMessage />
@@ -364,9 +372,37 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">GROWTH RATES (% YoY â€” used for years beyond explicit inputs)</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <NumField control={form.control} name="revenueGrowthY1" label="Y1 growth %" suffix="%" />
-                    <NumField control={form.control} name="revenueGrowthY2" label="Y2 growth %" suffix="%" />
-                    <NumField control={form.control} name="revenueGrowthY3" label="Y3+ growth %" suffix="%" />
+                    <NumField control={form.control} name="revenueGrowthY1" label="Y1 growth %" suffix="%"
+                      assumptionKey="revenueGrowthY1"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        currency: values.currency,
+                        country: values.country,
+                      }}
+                      setValue={(v) => form.setValue("revenueGrowthY1", Number(v))}
+                    />
+                    <NumField control={form.control} name="revenueGrowthY2" label="Y2 growth %" suffix="%"
+                      assumptionKey="revenueGrowthY2"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        currentValues: { revenueGrowthY1: values.revenueGrowthY1 },
+                      }}
+                      setValue={(v) => form.setValue("revenueGrowthY2", Number(v))}
+                    />
+                    <NumField control={form.control} name="revenueGrowthY3" label="Y3+ growth %" suffix="%"
+                      assumptionKey="revenueGrowthY3"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        currentValues: { revenueGrowthY1: values.revenueGrowthY1, revenueGrowthY2: values.revenueGrowthY2 },
+                      }}
+                      setValue={(v) => form.setValue("revenueGrowthY3", Number(v))}
+                    />
                   </div>
                 </div>
 
@@ -393,7 +429,16 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">MARGINS</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <NumField control={form.control} name="grossMargin"    label="Gross margin %" suffix="%" placeholder="70" />
+                    <NumField control={form.control} name="grossMargin" label="Gross margin %" suffix="%" placeholder="70"
+                      assumptionKey="grossMargin"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        currentValues: { revenueModel: values.revenueModel },
+                      }}
+                      setValue={(v) => form.setValue("grossMargin", Number(v))}
+                    />
                     <NumField control={form.control} name="cogsPercent"    label="COGS %" suffix="%" placeholder="30" />
                     <NumField control={form.control} name="ebitdaMarginY1" label="EBITDA margin Y1 %" suffix="%" placeholder="15" />
                     <NumField control={form.control} name="ebitdaMarginY3" label="EBITDA margin Y3 %" suffix="%" placeholder="25" />
@@ -483,8 +528,24 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">DCF ASSUMPTIONS</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <NumField control={form.control} name="discountRate"       label="Discount rate / WACC %" suffix="%" placeholder="15" />
-                    <NumField control={form.control} name="terminalGrowthRate" label="Terminal growth rate %" suffix="%" placeholder="2.5" />
+                    <NumField control={form.control} name="discountRate" label="Discount rate / WACC %" suffix="%" placeholder="15"
+                      assumptionKey="discountRate"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        country: values.country,
+                      }}
+                      setValue={(v) => form.setValue("discountRate", Number(v))}
+                    />
+                    <NumField control={form.control} name="terminalGrowthRate" label="Terminal growth rate %" suffix="%" placeholder="2.5"
+                      assumptionKey="terminalGrowthRate"
+                      aiContext={{
+                        industry: values.industry,
+                        country: values.country,
+                      }}
+                      setValue={(v) => form.setValue("terminalGrowthRate", Number(v))}
+                    />
                     <NumField control={form.control} name="taxRate"            label="Corporation tax rate %" suffix="%" placeholder="19" />
                   </div>
                 </div>
@@ -506,7 +567,16 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                         ))}
                       </div>
                     </div>
-                    <NumField control={form.control} name="targetExitMultiple" label="Exit EV/Revenue multiple" suffix="x" placeholder="8" />
+                    <NumField control={form.control} name="targetExitMultiple" label="Exit EV/Revenue multiple" suffix="x" placeholder="8"
+                      assumptionKey="targetExitMultiple"
+                      aiContext={{
+                        industry: values.industry,
+                        subSector: values.subSector,
+                        businessStage: values.businessStage,
+                        currentValues: { revenueModel: values.revenueModel },
+                      }}
+                      setValue={(v) => form.setValue("targetExitMultiple", Number(v))}
+                    />
                   </div>
                 </div>
 
@@ -605,6 +675,14 @@ export function VendorWizard({ profile }: VendorWizardProps) {
     </main>
   )
 }
+
+
+
+
+
+
+
+
 
 
 

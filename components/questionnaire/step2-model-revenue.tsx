@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -83,7 +83,7 @@ export function Step2ModelRevenue() {
             <SparklesIcon className="w-4 h-4 text-primary flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">
-                {selectedGoal ? `Goal: ${selectedGoal.icon} ${selectedGoal.title} · ` : ""}
+                {selectedGoal ? `Goal: ${selectedGoal.icon} ${selectedGoal.title} Â· ` : ""}
                 <span className="font-medium text-foreground">
                   Model: {activeModel.label}
                 </span>
@@ -165,7 +165,7 @@ export function Step2ModelRevenue() {
           </div>
         </div>
 
-        {/* revenue growth rates — benchmark wired */}
+        {/* revenue growth rates â€” benchmark wired */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Revenue growth rates (%)</h3>
           <p className="text-xs text-muted-foreground mb-3">Year-on-year revenue growth assumptions.</p>
@@ -177,7 +177,21 @@ export function Step2ModelRevenue() {
                   <FormControl>
                     <BenchmarkInput type="number"
                       placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY1") : "e.g. 120"}
-                      benchmark={getFieldBenchmark("revenueGrowthY1", watchedGrowthY1)} {...field} />
+                      benchmark={getFieldBenchmark("revenueGrowthY1", watchedGrowthY1)}
+                      assumptionKey="revenueGrowthY1"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currency: data.step1.currency,
+                        country: data.step1.country,
+                        currentValues: {
+                          revenueModel: data.step2.revenueModel,
+                          year1Revenue: data.step2.year1Revenue,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("revenueGrowthY1", String(v))}
+                      {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -190,7 +204,20 @@ export function Step2ModelRevenue() {
                   <FormControl>
                     <BenchmarkInput type="number"
                       placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY2") : "e.g. 80"}
-                      benchmark={getFieldBenchmark("revenueGrowthY2", watchedGrowthY2)} {...field} />
+                      benchmark={getFieldBenchmark("revenueGrowthY2", watchedGrowthY2)}
+                      assumptionKey="revenueGrowthY2"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currency: data.step1.currency,
+                        country: data.step1.country,
+                        currentValues: {
+                          revenueGrowthY1: watchedGrowthY1,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("revenueGrowthY2", String(v))}
+                      {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -203,7 +230,20 @@ export function Step2ModelRevenue() {
                   <FormControl>
                     <BenchmarkInput type="number"
                       placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY3") : "e.g. 50"}
-                      benchmark={getFieldBenchmark("revenueGrowthY3", watchedGrowthY3)} {...field} />
+                      benchmark={getFieldBenchmark("revenueGrowthY3", watchedGrowthY3)}
+                      assumptionKey="revenueGrowthY3"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currency: data.step1.currency,
+                        country: data.step1.country,
+                        currentValues: {
+                          revenueGrowthY2: watchedGrowthY2,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("revenueGrowthY3", String(v))}
+                      {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -212,7 +252,7 @@ export function Step2ModelRevenue() {
           </div>
         </div>
 
-        {/* unit economics — benchmark wired */}
+        {/* unit economics â€” benchmark wired */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Unit economics (optional)</h3>
           <p className="text-xs text-muted-foreground mb-3">Helps build a more detailed bottom-up revenue model.</p>
@@ -235,7 +275,7 @@ export function Step2ModelRevenue() {
             <FormField control={form.control} name="expectedCustomersY1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Expected customers – Year 1</FormLabel>
+                  <FormLabel>Expected customers â€“ Year 1</FormLabel>
                   <FormControl>
                     <input type="number" min="0" placeholder="e.g. 50" className={plain} {...field} />
                   </FormControl>
@@ -291,3 +331,5 @@ export function Step2ModelRevenue() {
     </Form>
   )
 }
+
+

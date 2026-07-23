@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -75,7 +75,7 @@ export function Step4FundingExit() {
           </p>
         </div>
 
-        {/* ── funding position ─────────────────────────────── */}
+        {/* â”€â”€ funding position â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-3">Current funding position</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -127,7 +127,7 @@ export function Step4FundingExit() {
               )}
             />
 
-            {/* BENCHMARK WIRED — burn rate */}
+            {/* BENCHMARK WIRED â€” burn rate */}
             <FormField
               control={form.control}
               name="monthlyBurnRate"
@@ -150,7 +150,7 @@ export function Step4FundingExit() {
               )}
             />
 
-            {/* BENCHMARK WIRED — runway */}
+            {/* BENCHMARK WIRED â€” runway */}
             <FormField
               control={form.control}
               name="runwayMonths"
@@ -167,7 +167,7 @@ export function Step4FundingExit() {
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>Cash balance ÷ monthly burn</FormDescription>
+                  <FormDescription>Cash balance Ã· monthly burn</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -192,7 +192,7 @@ export function Step4FundingExit() {
 
         <Separator />
 
-        {/* ── debt ─────────────────────────────────────────── */}
+        {/* â”€â”€ debt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-3">Debt financing (optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -227,7 +227,7 @@ export function Step4FundingExit() {
 
         <Separator />
 
-        {/* ── valuation & exit — BENCHMARK WIRED ──────────── */}
+        {/* â”€â”€ valuation & exit â€” BENCHMARK WIRED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-3">Valuation & exit assumptions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -264,16 +264,26 @@ export function Step4FundingExit() {
                       placeholder={hasBenchmarks ? getPlaceholder("revenueMultiple") : "e.g. 5"}
                       benchmark={getFieldBenchmark("revenueMultiple", w.targetExitMultiple)}
                       showBar={false}
+                      assumptionKey="targetExitMultiple"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currentValues: {
+                          revenueModel: data.step2.revenueModel,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("targetExitMultiple", String(v))}
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>e.g. 5x = 5× annual revenue at exit</FormDescription>
+                  <FormDescription>e.g. 5x = 5Ã— annual revenue at exit</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* BENCHMARK WIRED — WACC */}
+            {/* BENCHMARK WIRED â€” WACC */}
             <FormField
               control={form.control}
               name="discountRate"
@@ -287,20 +297,28 @@ export function Step4FundingExit() {
                       max="100"
                       placeholder={hasBenchmarks ? getPlaceholder("discountRate") : "e.g. 20"}
                       benchmark={getFieldBenchmark("discountRate", w.discountRate)}
+                      assumptionKey="discountRate"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        country: data.step1.country,
+                      }}
+                      onAIAccept={(v) => form.setValue("discountRate", String(v))}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
                     {hasBenchmarks
                       ? `Sector typical range shown above`
-                      : "Typical range: 15–25% for early-stage startups"}
+                      : "Typical range: 15â€“25% for early-stage startups"}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* BENCHMARK WIRED — terminal growth rate */}
+            {/* BENCHMARK WIRED â€” terminal growth rate */}
             <FormField
               control={form.control}
               name="terminalGrowthRate"
@@ -314,10 +332,16 @@ export function Step4FundingExit() {
                       max="20"
                       placeholder={hasBenchmarks ? getPlaceholder("terminalGrowthRate") : "e.g. 3"}
                       benchmark={getFieldBenchmark("terminalGrowthRate", w.terminalGrowthRate)}
+                      assumptionKey="terminalGrowthRate"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        country: data.step1.country,
+                      }}
+                      onAIAccept={(v) => form.setValue("terminalGrowthRate", String(v))}
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>Long-run perpetuity growth (typically 2–4%)</FormDescription>
+                  <FormDescription>Long-run perpetuity growth (typically 2â€“4%)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -338,3 +362,4 @@ export function Step4FundingExit() {
     </Form>
   )
 }
+

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -87,7 +87,7 @@ export function Step3CostsMargins() {
           />
         )}
 
-        {/* ── gross margin + cost driver — BENCHMARK WIRED ── */}
+        {/* â”€â”€ gross margin + cost driver â€” BENCHMARK WIRED â”€â”€ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -102,10 +102,20 @@ export function Step3CostsMargins() {
                     max="100"
                     placeholder={hasBenchmarks ? getPlaceholder("grossMargin") : "e.g. 72"}
                     benchmark={getFieldBenchmark("grossMargin", w.grossMargin)}
+                    assumptionKey="grossMargin"
+                    aiContext={{
+                      industry: data.step1.industry,
+                      subSector: data.step1.subSector,
+                      businessStage: data.step1.businessStage,
+                      currentValues: {
+                        revenueModel: data.step2.revenueModel,
+                      },
+                    }}
+                    onAIAccept={(v) => form.setValue("grossMargin", String(v))}
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Revenue minus direct costs / Revenue × 100</FormDescription>
+                <FormDescription>Revenue minus direct costs / Revenue Ã— 100</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -133,7 +143,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* ── headcount & salaries ─────────────────────────── */}
+        {/* â”€â”€ headcount & salaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Headcount & payroll</h3>
           <p className="text-xs text-muted-foreground mb-3">
@@ -173,7 +183,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* ── operating expenses — BENCHMARK WIRED ────────── */}
+        {/* â”€â”€ operating expenses â€” BENCHMARK WIRED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Operating expenses</h3>
           <p className="text-xs text-muted-foreground mb-3">
@@ -216,6 +226,13 @@ export function Step3CostsMargins() {
                       max="100"
                       placeholder={hasBenchmarks ? getPlaceholder("salesMarketingPercent") : "e.g. 20"}
                       benchmark={getFieldBenchmark("salesMarketingPercent", w.marketingBudgetPct)}
+                      assumptionKey="marketingBudgetPct"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                      }}
+                      onAIAccept={(v) => form.setValue("marketingBudgetPct", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -310,7 +327,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* ── profitability & capex — BENCHMARK WIRED ──────── */}
+        {/* â”€â”€ profitability & capex â€” BENCHMARK WIRED â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Profitability & capital expenditure</h3>
           <p className="text-xs text-muted-foreground mb-3">Target margins and capital investment needed.</p>
@@ -321,7 +338,7 @@ export function Step3CostsMargins() {
               name="ebitdaMarginY1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target EBITDA margin – Year 1 (%)</FormLabel>
+                  <FormLabel>Target EBITDA margin â€“ Year 1 (%)</FormLabel>
                   <FormControl>
                     <BenchmarkInput
                       type="number"
@@ -341,7 +358,7 @@ export function Step3CostsMargins() {
               name="ebitdaMarginY3"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target EBITDA margin – Year 3 (%)</FormLabel>
+                  <FormLabel>Target EBITDA margin â€“ Year 3 (%)</FormLabel>
                   <FormControl>
                     <BenchmarkInput
                       type="number"
@@ -360,7 +377,7 @@ export function Step3CostsMargins() {
               name="capexY1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CAPEX – Year 1 ({currency})</FormLabel>
+                  <FormLabel>CAPEX â€“ Year 1 ({currency})</FormLabel>
                   <FormControl>
                     <input
                       type="number"
@@ -414,3 +431,4 @@ export function Step3CostsMargins() {
     </Form>
   )
 }
+
