@@ -226,6 +226,28 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {subscription && (subscription.tier === "founder" || subscription.tier === "vendor_pro") && subscription.status === "active" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/stripe/portal", { method: "POST", credentials: "include" })
+                    const data = await res.json()
+                    if (data.url) {
+                      window.location.href = data.url
+                    } else {
+                      alert(data.error || "Failed to open billing portal")
+                    }
+                  } catch (err) {
+                    alert("Something went wrong")
+                  }
+                }}
+              >
+                Manage billing
+              </Button>
+            )}
             {isVendor && (
               <Button
                 variant="outline"
@@ -409,6 +431,8 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
     </main>
   )
 }
+
+
 
 
 
