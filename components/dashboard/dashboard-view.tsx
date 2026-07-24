@@ -422,7 +422,13 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
               </div>
             </div>
             <div className="p-6 pt-2 text-center">
-              <button onClick={() => router.push("/pricing")} className="text-xs text-muted-foreground hover:text-foreground">See all plans</button>
+              <button
+                onClick={() => router.push("/pricing")}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors group"
+              >
+                See all plans and features
+                <ArrowRightIcon className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </button>
             </div>
           </div>
         </div>
@@ -431,6 +437,7 @@ export function DashboardView({ profile, models, subscription }: DashboardViewPr
     </main>
   )
 }
+
 
 
 

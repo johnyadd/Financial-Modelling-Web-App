@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -21,9 +21,11 @@ export function Navbar() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<{
+    id: string
     full_name: string | null
     role: string
   } | null>(null)
+  const [tier, setTier] = useState<string>("free")
   const [menuOpen, setMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -37,10 +39,24 @@ export function Navbar() {
       if (user) {
         supabase
           .from("profiles")
-          .select("full_name, role")
+          .select("id, full_name, role")
           .eq("auth_user_id", user.id)
           .single()
-          .then(({ data }) => setProfile(data))
+          .then(({ data }) => {
+            setProfile(data)
+            if (data) {
+              supabase
+                .from("subscriptions")
+                .select("tier, status")
+                .eq("profile_id", data.id ?? "")
+                .maybeSingle()
+                .then(({ data: sub }) => {
+                  if (sub && (sub.status === "active" || sub.status === "trialing")) {
+                    setTier(sub.tier)
+                  }
+                })
+            }
+          })
       }
     })
 
@@ -127,9 +143,20 @@ export function Navbar() {
                   {profile?.full_name?.split(" ")[0] ?? "Account"}
                 </span>
                 {profile?.role && (
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0 hidden sm:inline-flex">
-                    {isVendor ? "Vendor" : "User"}
-                  </Badge>
+                  <div className="hidden sm:flex items-center gap-1">
+                    {tier === "founder" && (
+                      <Badge className="text-xs px-1.5 py-0 bg-blue-500 text-white hover:bg-blue-600">Founder</Badge>
+                    )}
+                    {tier === "vendor_pro" && (
+                      <Badge className="text-xs px-1.5 py-0 bg-orange-500 text-white hover:bg-orange-600">Vendor Pro</Badge>
+                    )}
+                    {tier === "enterprise" && (
+                      <Badge className="text-xs px-1.5 py-0 bg-purple-500 text-white hover:bg-purple-600">Enterprise</Badge>
+                    )}
+                    {tier === "free" && (
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0">Free</Badge>
+                    )}
+                  </div>
                 )}
                 <ChevronDownIcon className={cn(
                   "w-3 h-3 text-muted-foreground transition-transform",
@@ -191,3 +218,5 @@ export function Navbar() {
     </header>
   )
 }
+
+
