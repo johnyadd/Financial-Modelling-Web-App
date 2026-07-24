@@ -265,7 +265,19 @@ export function Step2ModelRevenue() {
                     <BenchmarkInput type="number" min="0"
                       placeholder={hasBenchmarks ? getPlaceholder("ltv") : "e.g. 1200"}
                       benchmark={getFieldBenchmark("ltv", watchedARPU)}
-                      showBar={false} {...field} />
+                      showBar={false}
+                      assumptionKey="arpu"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currency: data.step1.currency,
+                        currentValues: {
+                          revenueModel: data.step2.revenueModel,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("arpu", String(v))}
+                      {...field} />
                   </FormControl>
                   <FormDescription>Annual ARPU or contract value</FormDescription>
                   <FormMessage />
@@ -291,7 +303,18 @@ export function Step2ModelRevenue() {
                   <FormControl>
                     <BenchmarkInput type="number" min="0" max="100"
                       placeholder={hasBenchmarks ? getPlaceholder("churnRateAnnual") : "e.g. 5"}
-                      benchmark={getFieldBenchmark("churnRateAnnual", watchedChurn)} {...field} />
+                      benchmark={getFieldBenchmark("churnRateAnnual", watchedChurn)}
+                      assumptionKey="churnRate"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currentValues: {
+                          revenueModel: data.step2.revenueModel,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("churnRate", String(v))}
+                      {...field} />
                   </FormControl>
                   <FormDescription>% of customers lost per year</FormDescription>
                   <FormMessage />
@@ -331,5 +354,6 @@ export function Step2ModelRevenue() {
     </Form>
   )
 }
+
 
 

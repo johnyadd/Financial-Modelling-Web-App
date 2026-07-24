@@ -204,6 +204,16 @@ export function Step3CostsMargins() {
                       max="100"
                       placeholder={hasBenchmarks ? getPlaceholder("cogsPercent") : "e.g. 28"}
                       benchmark={getFieldBenchmark("cogsPercent", w.cogsPercent)}
+                      assumptionKey="cogsPercent"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currentValues: {
+                          grossMargin: w.grossMargin,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("cogsPercent", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -254,6 +264,13 @@ export function Step3CostsMargins() {
                       max="100"
                       placeholder={hasBenchmarks ? getPlaceholder("rdPercent") : "e.g. 15"}
                       benchmark={getFieldBenchmark("rdPercent", w.rdBudgetPct)}
+                      assumptionKey="rdBudgetPct"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                      }}
+                      onAIAccept={(v) => form.setValue("rdBudgetPct", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -344,6 +361,13 @@ export function Step3CostsMargins() {
                       type="number"
                       placeholder={hasBenchmarks ? getPlaceholder("ebitdaMargin") : "e.g. -45"}
                       benchmark={getFieldBenchmark("ebitdaMargin", w.ebitdaMarginY1)}
+                      assumptionKey="ebitdaMarginY1"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                      }}
+                      onAIAccept={(v) => form.setValue("ebitdaMarginY1", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -364,6 +388,16 @@ export function Step3CostsMargins() {
                       type="number"
                       placeholder={hasBenchmarks ? getPlaceholder("ebitdaMargin") : "e.g. 12"}
                       benchmark={getFieldBenchmark("ebitdaMargin", w.ebitdaMarginY3)}
+                      assumptionKey="ebitdaMarginY3"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currentValues: {
+                          ebitdaMarginY1: w.ebitdaMarginY1,
+                        },
+                      }}
+                      onAIAccept={(v) => form.setValue("ebitdaMarginY3", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -407,6 +441,12 @@ export function Step3CostsMargins() {
                       placeholder={hasBenchmarks ? getPlaceholder("depreciationRate") : "e.g. 25"}
                       benchmark={getFieldBenchmark("depreciationRate", w.depreciationPct)}
                       showBar={false}
+                      assumptionKey="depreciationPct"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                      }}
+                      onAIAccept={(v) => form.setValue("depreciationPct", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -431,4 +471,5 @@ export function Step3CostsMargins() {
     </Form>
   )
 }
+
 

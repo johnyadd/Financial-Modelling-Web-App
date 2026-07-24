@@ -141,6 +141,15 @@ export function Step4FundingExit() {
                       placeholder={hasBenchmarks ? getPlaceholder("monthlyBurnRate") : "e.g. 25000"}
                       benchmark={getFieldBenchmark("monthlyBurnRate", w.monthlyBurnRate)}
                       showBar={false}
+                      assumptionKey="monthlyBurnRate"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        subSector: data.step1.subSector,
+                        businessStage: data.step1.businessStage,
+                        currency: data.step1.currency,
+                        country: data.step1.country,
+                      }}
+                      onAIAccept={(v) => form.setValue("monthlyBurnRate", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -164,6 +173,12 @@ export function Step4FundingExit() {
                       placeholder={hasBenchmarks ? getPlaceholder("runwayMonths") : "e.g. 7"}
                       benchmark={getFieldBenchmark("runwayMonths", w.runwayMonths)}
                       showBar={false}
+                      assumptionKey="runwayMonths"
+                      aiContext={{
+                        industry: data.step1.industry,
+                        businessStage: data.step1.businessStage,
+                      }}
+                      onAIAccept={(v) => form.setValue("runwayMonths", String(v))}
                       {...field}
                     />
                   </FormControl>
@@ -362,4 +377,5 @@ export function Step4FundingExit() {
     </Form>
   )
 }
+
 
