@@ -1,6 +1,7 @@
-import { LandingHero } from "@/components/landing/landing-hero"
-import { TrustBar } from "@/components/landing/trust-bar"
-import { ProblemSolution } from "@/components/landing/problem-solution"
+﻿import { FinanystHero } from "@/components/landing/finanyst-hero"
+import { FinanystTrustBar } from "@/components/landing/finanyst-trust-bar"
+import { FinanystAIShowcase } from "@/components/landing/finanyst-ai-showcase"
+import { FinanystProblemSolution } from "@/components/landing/finanyst-problem-solution"
 import { AudienceSegments } from "@/components/landing/audience-segments"
 import { ModelRoadmap } from "@/components/landing/model-roadmap"
 import { EntitySelector } from "@/components/landing/entity-selector"
@@ -8,17 +9,18 @@ import { LandingFAQ } from "@/components/landing/landing-faq"
 import { LandingCTA } from "@/components/landing/landing-cta"
 
 export const metadata = {
-  title: "FinModels UK — Institutional Financial Models in Minutes",
+  title: "Finanyst — AI-native financial intelligence",
   description:
-    "Build professional financial models that pass institutional integrity checks. Purpose-built for UK founders, finance teams, and accounting firms. Multi-currency, AI-native.",
+    "Build institutional-quality financial models with AI-powered analysis. Purpose-built for founders, finance teams, and advisors. Multi-currency, global-ready.",
 }
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
-      <LandingHero />
-      <TrustBar />
-      <ProblemSolution />
+      <FinanystHero />
+      <FinanystTrustBar />
+      <FinanystAIShowcase />
+      <FinanystProblemSolution />
       <AudienceSegments />
       <ModelRoadmap />
       <EntitySelector />
