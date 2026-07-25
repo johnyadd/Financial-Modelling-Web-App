@@ -4,9 +4,9 @@ import { FinanystAIShowcase } from "@/components/landing/finanyst-ai-showcase"
 import { FinanystProblemSolution } from "@/components/landing/finanyst-problem-solution"
 import { FinanystAudienceSegments } from "@/components/landing/finanyst-audience-segments"
 import { FinanystModelRoadmap } from "@/components/landing/finanyst-model-roadmap"
+import { FinanystEntitySelector } from "@/components/landing/finanyst-entity-selector"
 import { FinanystFAQ } from "@/components/landing/finanyst-faq"
-import { EntitySelector } from "@/components/landing/entity-selector"
-import { LandingCTA } from "@/components/landing/landing-cta"
+import { FinanystLandingCTA } from "@/components/landing/finanyst-landing-cta"
 
 export const metadata = {
   title: "Finanyst — AI-native financial intelligence",
@@ -23,9 +23,9 @@ export default function HomePage() {
       <FinanystProblemSolution />
       <FinanystAudienceSegments />
       <FinanystModelRoadmap />
-      <EntitySelector />
+      <FinanystEntitySelector />
       <FinanystFAQ />
-      <LandingCTA />
+      <FinanystLandingCTA />
     </main>
   )
 }
