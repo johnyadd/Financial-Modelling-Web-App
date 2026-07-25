@@ -2,10 +2,10 @@
 import { FinanystTrustBar } from "@/components/landing/finanyst-trust-bar"
 import { FinanystAIShowcase } from "@/components/landing/finanyst-ai-showcase"
 import { FinanystProblemSolution } from "@/components/landing/finanyst-problem-solution"
-import { AudienceSegments } from "@/components/landing/audience-segments"
-import { ModelRoadmap } from "@/components/landing/model-roadmap"
+import { FinanystAudienceSegments } from "@/components/landing/finanyst-audience-segments"
+import { FinanystModelRoadmap } from "@/components/landing/finanyst-model-roadmap"
+import { FinanystFAQ } from "@/components/landing/finanyst-faq"
 import { EntitySelector } from "@/components/landing/entity-selector"
-import { LandingFAQ } from "@/components/landing/landing-faq"
 import { LandingCTA } from "@/components/landing/landing-cta"
 
 export const metadata = {
@@ -21,10 +21,10 @@ export default function HomePage() {
       <FinanystTrustBar />
       <FinanystAIShowcase />
       <FinanystProblemSolution />
-      <AudienceSegments />
-      <ModelRoadmap />
+      <FinanystAudienceSegments />
+      <FinanystModelRoadmap />
       <EntitySelector />
-      <LandingFAQ />
+      <FinanystFAQ />
       <LandingCTA />
     </main>
   )
