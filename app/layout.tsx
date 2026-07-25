@@ -2,6 +2,7 @@
 import { Inter, Instrument_Serif } from "next/font/google"
 import "./globals.css"
 import { Navbar } from "@/components/auth/navbar"
+import { FinanystFooter } from "@/components/landing/finanyst-footer"
 
 const inter = Inter({
   variable: "--font-sans",
@@ -47,7 +48,9 @@ export default function RootLayout({
       <body className={`${inter.variable} ${instrumentSerif.variable} antialiased`}>
         <Navbar />
         {children}
+        <FinanystFooter />
       </body>
     </html>
   )
 }
+
