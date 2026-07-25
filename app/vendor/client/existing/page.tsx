@@ -1,7 +1,7 @@
 ﻿import { ClientIntakeForm } from "@/components/vendor/client-intake-form"
 
 export const metadata = {
-  title: "New Existing Business Client | FinModels UK Vendor Portal",
+  title: "New Existing Business Client | Finanyst Vendor Portal",
 }
 
 export default function VendorExistingClientPage() {
@@ -25,3 +25,4 @@ export default function VendorExistingClientPage() {
     </main>
   )
 }
+

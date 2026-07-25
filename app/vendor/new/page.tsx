@@ -4,7 +4,7 @@ import { VendorWizard } from "@/components/vendor/vendor-wizard"
 import { getUserSubscription, canCreateAnotherModel } from "@/lib/subscription"
 import type { Metadata } from "next"
 
-export const metadata: Metadata = { title: "New Client Model | FinModels UK" }
+export const metadata: Metadata = { title: "New Client Model | Finanyst" }
 
 export default async function VendorNewPage() {
   const supabase = await createClient()
@@ -24,4 +24,5 @@ export default async function VendorNewPage() {
 
   return <VendorWizard profile={profile} />
 }
+
 

@@ -5,7 +5,7 @@ import { DashboardView } from "@/components/dashboard/dashboard-view"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Dashboard | FinModels UK",
+  title: "Dashboard | Finanyst",
 }
 
 export default async function DashboardPage() {
@@ -39,4 +39,5 @@ export default async function DashboardPage() {
     />
   )
 }
+
 

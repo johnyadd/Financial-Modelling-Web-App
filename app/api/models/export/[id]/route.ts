@@ -92,7 +92,7 @@ async function buildWorkbook(
   } | null,
 ): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook()
-  wb.creator = "FinModels UK"
+  wb.creator = "Finanyst"
   wb.created = new Date()
 
   const s1 = model.step1_business as Record<string, unknown>
@@ -109,10 +109,10 @@ async function buildWorkbook(
   const years = pnl.map((r) => `Year ${r.year}`)
   const cFmt = currencyFmt(currency)
 
-  // Vendor branding (falls back to FinModels UK defaults)
+  // Vendor branding (falls back to Finanyst defaults)
   const brandingHeaderColor = branding?.primary_color?.replace("#", "") || "1E3A5F"
   const brandingAccentColor = branding?.accent_color?.replace("#", "") || "27AE60"
-  const brandingFirmName = branding?.firm_name || "FinModels UK"
+  const brandingFirmName = branding?.firm_name || "Finanyst"
   const brandingTagline = branding?.tagline || "Institutional Financial Model"
   const brandingDisclaimer = branding?.disclaimer_text || null
 // -- SHEET 0: Cover Page ------------------------------------------
@@ -205,7 +205,7 @@ async function buildWorkbook(
   })
 
   const projectionYears = Number((dcfOut.summary as Record<string, unknown>)?.projection_years ?? 5)
-  const analystName = ((model.step1_business as Record<string, string>)?.analystName ?? "FinModels UK Analyst")
+  const analystName = ((model.step1_business as Record<string, string>)?.analystName ?? "Finanyst Analyst")
   const modelIntegrityPassed = balanceSheet.length > 0
   ? balanceSheet.every((bs) => {
       const assets = Number(bs.total_assets) || 0
@@ -308,7 +308,7 @@ async function buildWorkbook(
   rowIdx++
 
   const disclaimerText = [
-    "This financial model has been prepared by FinModels UK for the sole use of " + businessName + ".",
+    "This financial model has been prepared by Finanyst for the sole use of " + businessName + ".",
     "",
     "The information contained in this model is confidential and proprietary. It should not be reproduced,",
     "distributed, or disclosed to any third party without prior written consent.",
@@ -320,7 +320,7 @@ async function buildWorkbook(
     "The recipient should conduct their own due diligence and consult with qualified advisors before",
     "making any investment or business decision based on this model.",
     "",
-    "© " + new Date().getFullYear() + " FinModels UK. All rights reserved.",
+    "© " + new Date().getFullYear() + " Finanyst. All rights reserved.",
   ]
 
   disclaimerText.forEach((line) => {
@@ -352,7 +352,7 @@ async function buildWorkbook(
   // Title block
   summarySheet.mergeCells("A1:B1")
   const titleCell = summarySheet.getCell("A1")
-  titleCell.value = "FinModels UK â€” Financial Model Summary"
+  titleCell.value = "Finanyst â€” Financial Model Summary"
   titleCell.font = { bold: true, size: 14, color: { argb: COLOURS.headerFg } }
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOURS.headerBg } }
   titleCell.alignment = { vertical: "middle", horizontal: "center" }
@@ -1063,6 +1063,7 @@ export async function GET(
     return NextResponse.json({ error: "Export failed", detail: String(error) }, { status: 500 })
   }
 }
+
 
 
 

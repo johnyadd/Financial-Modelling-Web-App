@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -20,7 +20,7 @@ const TIER_DATA = [
     key: "free",
     name: "Free",
     price: 0,
-    priceLabel: "£0",
+    priceLabel: "Â£0",
     period: "forever",
     description: "Try the platform, view models in-app",
     icon: <SparklesIcon className="w-5 h-5 text-muted-foreground" />,
@@ -41,7 +41,7 @@ const TIER_DATA = [
     key: "founder",
     name: "Founder",
     price: 29,
-    priceLabel: "£29",
+    priceLabel: "Â£29",
     period: "per month",
     description: "Founders and finance teams building models",
     icon: <StarIcon className="w-5 h-5 text-blue-600" />,
@@ -61,7 +61,7 @@ const TIER_DATA = [
     key: "vendor_pro",
     name: "Vendor Pro",
     price: 99,
-    priceLabel: "£99",
+    priceLabel: "Â£99",
     period: "per month",
     description: "Accounting firms and consultants serving clients",
     icon: <BriefcaseIcon className="w-5 h-5 text-orange-600" />,
@@ -116,7 +116,7 @@ export function PricingView({ isLoggedIn, currentTier }: PricingViewProps) {
     }
 
     if (tier === "enterprise") {
-      window.location.href = "mailto:hello@finmodels.co.uk?subject=Enterprise%20Enquiry"
+      window.location.href = "mailto:hello@finanyst.com?subject=Enterprise%20Enquiry"
       return
     }
 
@@ -221,7 +221,7 @@ export function PricingView({ isLoggedIn, currentTier }: PricingViewProps) {
 
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            All plans include: Institutional integrity checks · Multi-currency · GDPR compliant
+            All plans include: Institutional integrity checks Â· Multi-currency Â· GDPR compliant
           </p>
           <p className="text-xs text-muted-foreground">
             Prices in GBP. VAT added where applicable. Cancel anytime.
@@ -232,3 +232,4 @@ export function PricingView({ isLoggedIn, currentTier }: PricingViewProps) {
     </main>
   )
 }
+

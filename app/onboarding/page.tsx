@@ -31,7 +31,7 @@ export default function OnboardingPage() {
           Account confirmed!
         </h1>
         <p className="text-muted-foreground text-sm mb-8">
-          Your FinModels UK account is ready. Where would you like to go?
+          Your Finanyst account is ready. Where would you like to go?
         </p>
         <div className="space-y-3">
           <Button
@@ -59,3 +59,4 @@ export default function OnboardingPage() {
     </main>
   )
 }
+

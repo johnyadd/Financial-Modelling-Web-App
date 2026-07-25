@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server"
+﻿import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { BrandingForm } from "@/components/vendor/branding-form"
 import type { Metadata } from "next"
 
-export const metadata: Metadata = { title: "Vendor Branding | FinModels UK" }
+export const metadata: Metadata = { title: "Vendor Branding | Finanyst" }
 
 export default async function VendorSettingsPage() {
   const supabase = await createClient()
@@ -27,3 +27,4 @@ export default async function VendorSettingsPage() {
 
   return <BrandingForm profileId={profile.id} initialBranding={branding} />
 }
+

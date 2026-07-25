@@ -93,7 +93,7 @@ export function Navbar() {
           className="flex items-center gap-2 font-semibold text-foreground hover:opacity-80 transition-opacity"
         >
           <BarChart2Icon className="w-5 h-5 text-primary" />
-          <span>FinModels UK</span>
+          <span className="font-display text-xl tracking-tight">Finanyst</span>
         </Link>
 
         {/* Nav links */}
@@ -218,5 +218,6 @@ export function Navbar() {
     </header>
   )
 }
+
 
 

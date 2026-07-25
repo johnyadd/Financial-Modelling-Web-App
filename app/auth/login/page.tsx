@@ -3,7 +3,7 @@ import { LoginForm } from "@/components/auth/login-form"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Sign in | FinModels UK",
+  title: "Sign in | Finanyst",
 }
 
 export default function LoginPage() {
@@ -15,7 +15,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="text-sm text-muted-foreground">
-            Sign in to your FinModels UK account
+            Sign in to your Finanyst account
           </p>
         </div>
         <Suspense fallback={<div className="h-64 rounded-2xl border border-border animate-pulse bg-muted" />}>
@@ -25,3 +25,4 @@ export default function LoginPage() {
     </main>
   )
 }
+

@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation"
 import { VendorDashboard } from "@/components/vendor/vendor-dashboard"
 
-export const metadata = { title: "Vendor Portal | FinModels UK" }
+export const metadata = { title: "Vendor Portal | Finanyst" }
 
 export default async function VendorPage() {
   const supabase = await createClient()
@@ -18,3 +18,4 @@ export default async function VendorPage() {
 
   return <VendorDashboard profile={profile} models={models ?? []} />
 }
+

@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server"
+﻿import { createClient } from "@/lib/supabase/server"
 import { PricingView } from "@/components/pricing/pricing-view"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Pricing | FinModels UK",
+  title: "Pricing | Finanyst",
   description: "Simple pricing for founders, finance teams, and accounting firms",
 }
 
@@ -34,3 +34,4 @@ export default async function PricingPage() {
 
   return <PricingView isLoggedIn={!!user} currentTier={currentTier} />
 }
+

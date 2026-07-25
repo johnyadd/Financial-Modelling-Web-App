@@ -3,7 +3,7 @@ import { SignupForm } from "@/components/auth/signup-form"
 import { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Create account | FinModels UK",
+  title: "Create account | Finanyst",
 }
 
 export default function SignupPage() {
@@ -15,7 +15,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="text-sm text-muted-foreground">
-            Get started with FinModels UK - free to begin
+            Get started with Finanyst - free to begin
           </p>
         </div>
         <Suspense fallback={<div className="h-96 rounded-2xl border border-border animate-pulse bg-muted" />}>
@@ -25,3 +25,4 @@ export default function SignupPage() {
     </main>
   )
 }
+

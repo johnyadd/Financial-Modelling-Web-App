@@ -1,5 +1,5 @@
-/**
- * FinModels UK — Central Assumptions Schema
+﻿/**
+ * Finanyst â€” Central Assumptions Schema
  * ------------------------------------------
  * Single source of truth for every model assumption across the platform.
  *
@@ -37,7 +37,7 @@ export interface AISuggestionContext {
 
 export interface AISuggestionResult {
   value: number | string
-  rationale: string          // "Why this suggestion" — shown to user
+  rationale: string          // "Why this suggestion" â€” shown to user
   confidence: "low" | "medium" | "high"
   source?: string            // e.g. "SaaS Capital 2024 benchmark data"
 }
@@ -93,7 +93,7 @@ export interface AssumptionDefinition {
 
 export const ASSUMPTIONS: AssumptionDefinition[] = [
 
-  // ═══ SECTION: BUSINESS INFORMATION ═══════════════════════════════════
+  // â•â•â• SECTION: BUSINESS INFORMATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "businessName",
     label: "Business / company name",
@@ -146,12 +146,12 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     section: "business", step: 1, type: "enum", required: true,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     allowedValues: [
-      "Pre-revenue", "Early Revenue (< £500k ARR)", "Growth (£500k-£5m ARR)",
+      "Pre-revenue", "Early Revenue (< Â£500k ARR)", "Growth (Â£500k-Â£5m ARR)",
       "Established (Profitable)", "Mature", "PE-backed", "Public",
     ],
   },
 
-  // ═══ SECTION: REVENUE ASSUMPTIONS ═══════════════════════════════════
+  // â•â•â• SECTION: REVENUE ASSUMPTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "revenueModel",
     label: "Revenue model",
@@ -249,7 +249,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: -50, max: 200, suffix: "%",
     getAISuggestion: (ctx) => {
       const y2 = Number(ctx.currentValues?.revenueGrowthY2) || 15
-      return { value: Math.max(y2 * 0.6, 5), rationale: "Terminal growth trajectory — decelerating toward GDP+premium", confidence: "medium" }
+      return { value: Math.max(y2 * 0.6, 5), rationale: "Terminal growth trajectory â€” decelerating toward GDP+premium", confidence: "medium" }
     },
   },
   {
@@ -268,7 +268,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     },
   },
 
-  // ═══ SECTION: COST STRUCTURE ═══════════════════════════════════════
+  // â•â•â• SECTION: COST STRUCTURE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "grossMargin",
     label: "Gross margin",
@@ -395,7 +395,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 100, defaultValue: 25, suffix: "%",
   },
 
-  // ═══ SECTION: WORKING CAPITAL ═══════════════════════════════════════
+  // â•â•â• SECTION: WORKING CAPITAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "accountsReceivableDays",
     label: "Debtor days (DSO)",
@@ -425,7 +425,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 365, defaultValue: 0, suffix: "days",
   },
 
-  // ═══ SECTION: FUNDING & CASH ═══════════════════════════════════════
+  // â•â•â• SECTION: FUNDING & CASH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "currentCash",
     label: "Current cash balance",
@@ -454,7 +454,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0,
   },
 
-  // ═══ SECTION: DEBT & INTEREST ═════════════════════════════════════
+  // â•â•â• SECTION: DEBT & INTEREST â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "debtFunding",
     label: "Total debt",
@@ -476,7 +476,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     audit: { industryTypical: "5-10% for UK SME term loans", source: "Bank of England SME lending data 2024" },
   },
 
-  // ═══ SECTION: VALUATION ═══════════════════════════════════════════
+  // â•â•â• SECTION: VALUATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "discountRate",
     label: "Discount rate / WACC",
@@ -507,7 +507,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 5, defaultValue: 2.5, suffix: "%",
   },
 
-  // ═══ SECTION: TAX ══════════════════════════════════════════════════
+  // â•â•â• SECTION: TAX â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "taxRate",
     label: "Corporation tax rate",
@@ -517,13 +517,13 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     cellName: "in_taxRate", excelFormat: "0.00%",
     min: 0, max: 50, defaultValue: 19, suffix: "%",
     getAISuggestion: (ctx) => {
-      if (ctx.country === "United Kingdom") return { value: 25, rationale: "UK main rate 25% (marginal relief 19-25% for profits £50k-£250k)", confidence: "high" }
+      if (ctx.country === "United Kingdom") return { value: 25, rationale: "UK main rate 25% (marginal relief 19-25% for profits Â£50k-Â£250k)", confidence: "high" }
       if (ctx.country === "United States") return { value: 21, rationale: "US federal 21% (state adds 0-13%)", confidence: "high" }
       return { value: 20, rationale: "Global average", confidence: "low" }
     },
   },
 
-  // ═══ SECTION: EXIT ═════════════════════════════════════════════════
+  // â•â•â• SECTION: EXIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   {
     key: "exitHorizonYears",
     label: "Exit horizon (years)",
@@ -610,3 +610,4 @@ export const SECTION_TITLES: Record<AssumptionSection, string> = {
   tax: "Tax",
   exit: "Exit Assumptions",
 }
+

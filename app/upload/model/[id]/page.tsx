@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
+﻿import { createClient } from "@/lib/supabase/server"
 import { notFound, redirect } from "next/navigation"
 import { ModelDetail } from "@/components/models/model-detail"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Review Model | FinModels UK",
+  title: "Review Model | Finanyst",
 }
 
 interface Props {
@@ -36,3 +36,4 @@ export default async function UploadModelPage({ params }: Props) {
 
   return <ModelDetail model={model} output={output} />
 }
+

@@ -33,7 +33,7 @@ export function TrustBar() {
     <section className="border-b border-border bg-muted/30 py-8">
       <div className="max-w-6xl mx-auto px-6">
         <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-6">
-          Why teams choose FinModels UK
+          Why teams choose Finanyst
         </p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {TRUST_ITEMS.map((item, i) => (
@@ -48,4 +48,5 @@ export function TrustBar() {
     </section>
   )
 }
+
 

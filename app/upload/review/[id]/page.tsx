@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
+﻿import { createClient } from "@/lib/supabase/server"
 import { notFound, redirect } from "next/navigation"
 import { ReviewView } from "@/components/upload/review-view"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Review Extracted Data | FinModels UK",
+  title: "Review Extracted Data | Finanyst",
 }
 
 interface ReviewPageProps {
@@ -43,3 +43,4 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     />
   )
 }
+

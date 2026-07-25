@@ -1,4 +1,4 @@
-import { XIcon, CheckIcon, ClockIcon, AlertTriangleIcon, DollarSignIcon } from "lucide-react"
+﻿import { XIcon, CheckIcon, ClockIcon, AlertTriangleIcon, DollarSignIcon } from "lucide-react"
 
 export function ProblemSolution() {
   return (
@@ -11,7 +11,7 @@ export function ProblemSolution() {
             Financial modelling is broken.
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Whether you're pitching investors, running FP&A, or advising clients — you're stuck between three bad options.
+            Whether you're pitching investors, running FP&A, or advising clients â€” you're stuck between three bad options.
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export function ProblemSolution() {
               <p className="font-semibold text-foreground">Expensive alternatives</p>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Consultancy fees for a proper deal model: £5,000-£20,000. Enterprise FP&A software (Anaplan, Vena): £50k+ annually.
+              Consultancy fees for a proper deal model: Â£5,000-Â£20,000. Enterprise FP&A software (Anaplan, Vena): Â£50k+ annually.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export function ProblemSolution() {
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-primary mb-4">FinModels UK workflow</p>
+              <p className="text-sm font-semibold text-primary mb-4">Finanyst workflow</p>
               <ul className="space-y-2">
                 <li className="flex gap-2 text-sm text-foreground">
                   <CheckIcon className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" /> Answer 4 quick questions
@@ -109,3 +109,4 @@ export function ProblemSolution() {
     </section>
   )
 }
+
