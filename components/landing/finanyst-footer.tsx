@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 
@@ -53,16 +53,13 @@ export function FinanystFooter() {
             </h3>
             <ul className="space-y-3">
               <li>
-                <a
-                  href="mailto:hello@finanyst.com"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
                 <a
-                  href="mailto:hello@finanyst.com?subject=Enterprise%20Enquiry"
+                  href="mailto:sales@finanyst.com?subject=Enterprise%20Enquiry"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Enterprise
@@ -95,7 +92,7 @@ export function FinanystFooter() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {currentYear} Finanyst. All rights reserved.
+            Â© {currentYear} Finanyst. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground italic">
             Institutional financial models. AI-powered.
@@ -106,3 +103,5 @@ export function FinanystFooter() {
     </footer>
   )
 }
+
+

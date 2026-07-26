@@ -116,7 +116,7 @@ export function PricingView({ isLoggedIn, currentTier }: PricingViewProps) {
     }
 
     if (tier === "enterprise") {
-      window.location.href = "mailto:hello@finanyst.com?subject=Enterprise%20Enquiry"
+      window.location.href = "mailto:sales@finanyst.com?subject=Enterprise%20Enquiry"
       return
     }
 
@@ -232,4 +232,5 @@ export function PricingView({ isLoggedIn, currentTier }: PricingViewProps) {
     </main>
   )
 }
+
 
