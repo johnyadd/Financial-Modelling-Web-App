@@ -1,7 +1,5 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-
-const ADMIN_EMAILS = ["johnnnyaddae@gmail.com"]
 
 const TIER_PRICES: Record<string, number> = {
   founder: 29,
@@ -14,7 +12,18 @@ export async function GET() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user || !user.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+    }
+
+    // Check admin_role in profiles table
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("admin_role")
+      .eq("auth_user_id", user.id)
+      .single()
+
+    if (!profile || profile.admin_role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
@@ -136,3 +145,4 @@ export async function GET() {
     }, { status: 500 })
   }
 }
+
