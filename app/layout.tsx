@@ -3,6 +3,7 @@ import { Inter, Instrument_Serif } from "next/font/google"
 import "./globals.css"
 import { Navbar } from "@/components/auth/navbar"
 import { FinanystFooter } from "@/components/landing/finanyst-footer"
+import { GoogleAnalytics } from "@/components/analytics/google-analytics"
 
 const inter = Inter({
   variable: "--font-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${instrumentSerif.variable} antialiased`}>
+        <GoogleAnalytics />
         <Navbar />
         {children}
         <FinanystFooter />
@@ -53,4 +55,5 @@ export default function RootLayout({
     </html>
   )
 }
+
 
