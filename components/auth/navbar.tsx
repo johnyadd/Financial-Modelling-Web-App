@@ -24,6 +24,7 @@ export function Navbar() {
     id: string
     full_name: string | null
     role: string
+    admin_role?: string
   } | null>(null)
   const [tier, setTier] = useState<string>("free")
   const [menuOpen, setMenuOpen] = useState(false)
@@ -39,7 +40,7 @@ export function Navbar() {
       if (user) {
         supabase
           .from("profiles")
-          .select("id, full_name, role")
+          .select("id, full_name, role, admin_role")
           .eq("auth_user_id", user.id)
           .single()
           .then(({ data }) => {
@@ -156,6 +157,11 @@ export function Navbar() {
                     {tier === "free" && (
                       <Badge variant="secondary" className="text-xs px-1.5 py-0">Free</Badge>
                     )}
+                    {profile?.admin_role === "admin" && (
+                      <Link href="/admin" onClick={(e) => e.stopPropagation()}>
+                        <Badge className="text-xs px-1.5 py-0 bg-red-500 text-white hover:bg-red-600 cursor-pointer">Admin</Badge>
+                      </Link>
+                    )}
                   </div>
                 )}
                 <ChevronDownIcon className={cn(
@@ -218,6 +224,8 @@ export function Navbar() {
     </header>
   )
 }
+
+
 
 
 
