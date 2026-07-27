@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  BarChart2Icon,
   LogOutIcon,
   UserIcon,
   BriefcaseIcon,
@@ -93,8 +92,7 @@ export function Navbar() {
           href="/"
           className="flex items-center gap-2 font-semibold text-foreground hover:opacity-80 transition-opacity"
         >
-          <BarChart2Icon className="w-5 h-5 text-primary" />
-          <span className="font-display text-xl tracking-tight">Finanyst</span>
+          <img src="/finanyst-wordmark.svg" alt="Finanyst" className="h-10 w-auto" />
         </Link>
 
         {/* Nav links */}
@@ -224,6 +222,9 @@ export function Navbar() {
     </header>
   )
 }
+
+
+
 
 
 

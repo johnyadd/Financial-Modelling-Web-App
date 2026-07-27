@@ -23,6 +23,13 @@ export const metadata: Metadata = {
   description:
     "Build institutional-quality financial models with AI-powered analysis. Purpose-built for founders, finance teams, and advisors. Multi-currency, global-ready.",
   metadataBase: new URL("https://finanyst.com"),
+  icons: {
+    icon: [
+      { url: "/finanyst-favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/finanyst-favicon.svg",
+    apple: "/finanyst-icon-square.svg",
+  },
   openGraph: {
     title: "Finanyst — AI-native financial intelligence",
     description:
@@ -55,5 +62,6 @@ export default function RootLayout({
     </html>
   )
 }
+
 
 

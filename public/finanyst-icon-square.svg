@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Cream background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="#f7f3e9"/>
+  <!-- BarChart bars in coral -->
+  <g stroke="#d97757" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="180" y1="330" x2="180" y2="380"/>
+    <line x1="256" y1="280" x2="256" y2="380"/>
+    <line x1="332" y1="230" x2="332" y2="380"/>
+  </g>
+  <!-- Serif "F" -->
+  <text x="256" y="200" font-family="Instrument Serif, Georgia, serif" font-size="200" font-weight="400" fill="#3a2f2a" text-anchor="middle" letter-spacing="-4">F</text>
+</svg>

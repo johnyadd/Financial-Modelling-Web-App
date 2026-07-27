@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="80" viewBox="0 0 320 80">
+  <g>
+    <rect x="14" y="46" width="4" height="12" rx="1.5" fill="#d97757"/>
+    <rect x="22" y="36" width="4" height="22" rx="1.5" fill="#d97757"/>
+    <rect x="30" y="28" width="4" height="30" rx="1.5" fill="#d97757"/>
+    <circle cx="32" cy="28" r="3" fill="#d97757"/>
+  </g>
+  <text x="44" y="58" font-family="Instrument Serif, Georgia, serif" font-size="38" font-weight="300" fill="#3a2f2a" letter-spacing="1">Finanyst</text>
+</svg>
