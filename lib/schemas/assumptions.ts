@@ -107,6 +107,7 @@ export interface AssumptionDefinition {
   applicableModels: ModelType[]            // which model types use this
   applicableStages?: BusinessStage[]       // filter by business stage
   applicableIndustries?: string[]          // filter by industry (empty = all)
+  applicableBusinessSubTypes?: BusinessTypeSub[]  // Session 2a: driver fields only show for matching sub-types
 
   // -- Data type & validation --
   type: AssumptionType
@@ -336,6 +337,163 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     helpText: "Only used when revenue entry mode = driverBased",
   },
 
+  // ═══ SESSION 2a ADDITIONS: driver fields for 3 sub-categories ═══════
+  // Only show in UI when revenueEntryMode = "driverBased" AND businessTypeSub matches.
+
+  // ─── SaaS B2B drivers ────────────────────────────────────────────────
+  {
+    key: "saasB2b_startingCustomers",
+    label: "Starting customer count",
+    description: "Number of paying customers at model start (month 0)",
+    helpText: "Only used for B2B SaaS driver mode",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2b"],
+    min: 0,
+    getAISuggestion: (ctx) => {
+      const stage = ctx.businessStage || ""
+      if (stage.includes("Pre-revenue")) return { value: 0, rationale: "Pre-revenue businesses start with zero paying customers", confidence: "high" }
+      if (stage.includes("Early Revenue")) return { value: 20, rationale: "Early-revenue B2B SaaS typically has 10-50 customers", confidence: "medium" }
+      if (stage.includes("Growth")) return { value: 100, rationale: "Growth-stage B2B SaaS typically has 50-500 customers", confidence: "medium" }
+      return { value: 50, rationale: "General B2B SaaS starting point", confidence: "low" }
+    },
+  },
+  {
+    key: "saasB2b_newCustomersPerMonth",
+    label: "New customers per month",
+    description: "Average number of new paying customers acquired each month",
+    helpText: "For B2B SaaS driver mode. Sales pipeline output — think about sales team capacity.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2b"],
+    min: 0,
+  },
+  {
+    key: "saasB2b_monthlyChurnRate",
+    label: "Monthly churn rate",
+    description: "Percentage of customers who cancel each month",
+    helpText: "B2B SaaS: 1-2% monthly is best-in-class. 2-4% is typical. Above 5% is concerning.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2b"],
+    min: 0, max: 100, suffix: "%",
+    getAISuggestion: (ctx) => {
+      if (ctx.subSector?.toLowerCase().includes("enterprise")) return { value: 0.5, rationale: "Enterprise B2B SaaS: 0.5% monthly (6% annual) is typical", confidence: "high", source: "SaaS Capital 2024" }
+      return { value: 2, rationale: "Mid-market B2B SaaS: 2% monthly (~24% annual) is typical", confidence: "high" }
+    },
+  },
+  {
+    key: "saasB2b_arpu",
+    label: "ARPU per customer per month",
+    description: "Average revenue per user per month",
+    helpText: "Blended MRR per customer. Include upsells, exclude one-off fees.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2b"],
+    min: 0,
+  },
+  {
+    key: "saasB2b_expansionRevenuePct",
+    label: "Expansion revenue %",
+    description: "Additional revenue from existing customers (upsells, seat expansion) as % of base",
+    helpText: "Best-in-class B2B SaaS: 15-30%. NRR of 110-130% comes from this.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2b"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 15,
+  },
+
+  // ─── E-commerce D2C drivers ──────────────────────────────────────────
+  {
+    key: "ecomD2c_monthlyTraffic",
+    label: "Monthly website traffic (sessions)",
+    description: "Total unique sessions per month across all channels",
+    helpText: "For D2C e-commerce driver mode. Include paid + organic + referral traffic.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_d2c"],
+    min: 0,
+  },
+  {
+    key: "ecomD2c_conversionRate",
+    label: "Conversion rate",
+    description: "Percentage of sessions that result in a purchase",
+    helpText: "D2C industry average: 2-3%. Best in class: 4-5%. Fashion/apparel often lower (1-2%).",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_d2c"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 2.5,
+    getAISuggestion: () => ({ value: 2.5, rationale: "D2C e-commerce industry average is 2-3%", confidence: "high", source: "Shopify Commerce Report 2024" }),
+  },
+  {
+    key: "ecomD2c_averageOrderValue",
+    label: "Average order value (AOV)",
+    description: "Average revenue per order",
+    helpText: "Total revenue divided by number of orders. Focus on driving this up via bundling and upsells.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_d2c"],
+    min: 0,
+  },
+  {
+    key: "ecomD2c_repeatPurchaseRate",
+    label: "Repeat purchase rate",
+    description: "Percentage of customers who purchase again within 12 months",
+    helpText: "D2C benchmark: 20-30%. Consumables/subscription products can hit 60%+.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_d2c"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 25,
+  },
+
+  // ─── Professional Services drivers ───────────────────────────────────
+  {
+    key: "svcProf_billableStaffCount",
+    label: "Billable staff count",
+    description: "Number of consultants / professionals who bill clients",
+    helpText: "For professional services driver mode. Exclude admin, ops, marketing headcount.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_professional"],
+    min: 0,
+  },
+  {
+    key: "svcProf_billableHoursPerMonth",
+    label: "Billable hours per staff per month",
+    description: "Target billable hours per person per month (before utilization)",
+    helpText: "Consulting/legal norms: 160-180 hours/month capacity. Accounting: often 140-160.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_professional"],
+    min: 0, max: 250,
+    defaultValue: 160,
+  },
+  {
+    key: "svcProf_utilizationRate",
+    label: "Utilization rate",
+    description: "Percentage of billable hours actually billed to clients",
+    helpText: "Big 4 target: 75-85%. Boutique consultancies: 60-75%. Freelance: often 40-60%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_professional"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 70,
+    getAISuggestion: () => ({ value: 70, rationale: "Mid-tier professional services target 65-75% utilization", confidence: "high" }),
+  },
+  {
+    key: "svcProf_hourlyRate",
+    label: "Blended hourly rate",
+    description: "Average billed hourly rate across all staff levels",
+    helpText: "UK mid-tier consulting: £150-300/hr. Boutique specialist: £300-800/hr. Freelance: £75-200/hr.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_professional"],
+    min: 0,
+  },
+
   // ═══ Existing top-line revenue fields (used when revenueEntryMode = "topLine") ═══
   {
     key: "year1Revenue",
@@ -400,7 +558,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: -50, max: 500, suffix: "%",
     getAISuggestion: (ctx) => {
       const y1 = Number(ctx.currentValues?.revenueGrowthY1) || 20
-      // Growth typically slows in year 2 as base grows
       return { value: Math.max(y1 * 0.75, 10), rationale: "Growth typically decelerates ~25% as revenue base scales", confidence: "medium" }
     },
   },
@@ -422,7 +579,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "churnRate",
     label: "Annual customer churn",
     description: "Annual percentage of customers who leave",
-    helpText: "For SaaS: 5-8% is best-in-class, 8-15% typical, >15% concerning",
+    helpText: "For SaaS: 5-8% is best-in-class, 8-15% typical, above 15% concerning",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["saas", "pre_revenue_dcf"],
     cellName: "in_churnRate", excelFormat: "0.0%",
@@ -762,6 +919,11 @@ export function groupBySection(assumptions: AssumptionDefinition[]): Record<Assu
     grouped[a.section].push(a)
   })
   return grouped
+}
+
+/** Session 2a: Get driver fields applicable to a specific business sub-type */
+export function getDriverFieldsForSubType(subType: BusinessTypeSub): AssumptionDefinition[] {
+  return ASSUMPTIONS.filter((a) => a.applicableBusinessSubTypes?.includes(subType))
 }
 
 /** Human-readable section titles for display */
