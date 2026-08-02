@@ -1,5 +1,5 @@
-﻿/**
- * Finanyst â€” Central Assumptions Schema
+/**
+ * Finanyst — Central Assumptions Schema
  * ------------------------------------------
  * Single source of truth for every model assumption across the platform.
  *
@@ -25,6 +25,57 @@ export type AssumptionSection = "business" | "revenue" | "costs" | "funding" | "
 export type ModelType = "dcf" | "three_statement" | "pre_revenue_dcf" | "lbo" | "saas" | "ma"
 export type BusinessStage = "Pre-revenue" | "Early Revenue" | "Growth" | "Established" | "Mature"
 
+// -- SESSION 1 ADDITIONS: driver-based revenue mode foundation ----------
+
+export type RevenueEntryMode = "topLine" | "driverBased"
+
+export type BusinessTypeMain =
+  | "saas"
+  | "ecommerce"
+  | "services"
+  | "product"
+  | "realEstate"
+  | "healthcare"
+  | "education"
+  | "hospitality"
+
+export type BusinessTypeSub =
+  // SaaS
+  | "saas_b2b"
+  | "saas_b2c"
+  | "saas_usage"
+  // E-commerce
+  | "ecom_d2c"
+  | "ecom_marketplace"
+  // Services
+  | "services_professional"
+  | "services_agency"
+  | "services_freelance"
+  // Product
+  | "product_manufacturing"
+  | "product_retail"
+  | "product_wholesale"
+  // Real Estate
+  | "realestate_development"
+  | "realestate_rental"
+  | "realestate_agency"
+  | "realestate_reit"
+  // Healthcare
+  | "health_clinic"
+  | "health_hospital"
+  | "health_device"
+  | "health_saas"
+  | "health_pharmacy"
+  // Education
+  | "edu_institution"
+  | "edu_edtech"
+  | "edu_tutoring"
+  | "edu_corptraining"
+  // Hospitality
+  | "hosp_restaurant"
+  | "hosp_hotel"
+  | "hosp_catering"
+
 export interface AISuggestionContext {
   industry?: string
   subSector?: string
@@ -37,7 +88,7 @@ export interface AISuggestionContext {
 
 export interface AISuggestionResult {
   value: number | string
-  rationale: string          // "Why this suggestion" â€” shown to user
+  rationale: string          // "Why this suggestion" — shown to user
   confidence: "low" | "medium" | "high"
   source?: string            // e.g. "SaaS Capital 2024 benchmark data"
 }
@@ -88,12 +139,87 @@ export interface AssumptionDefinition {
   }
 }
 
+// -- SESSION 1 ADDITIONS: business type hierarchy -----------------------
+// Mapping of main types to their sub-categories (used by UI to filter sub-picker)
+export const BUSINESS_TYPE_HIERARCHY: Record<
+  BusinessTypeMain,
+  { label: string; subs: { key: BusinessTypeSub; label: string }[] }
+> = {
+  saas: {
+    label: "SaaS / Subscription software",
+    subs: [
+      { key: "saas_b2b",   label: "B2B SaaS" },
+      { key: "saas_b2c",   label: "B2C SaaS" },
+      { key: "saas_usage", label: "Usage-based SaaS" },
+    ],
+  },
+  ecommerce: {
+    label: "E-commerce",
+    subs: [
+      { key: "ecom_d2c",         label: "Direct-to-consumer product" },
+      { key: "ecom_marketplace", label: "Marketplace platform" },
+    ],
+  },
+  services: {
+    label: "Services / Consulting",
+    subs: [
+      { key: "services_professional", label: "Professional services (consulting, legal, accounting)" },
+      { key: "services_agency",       label: "Agency (marketing, creative)" },
+      { key: "services_freelance",    label: "Freelance / individual services" },
+    ],
+  },
+  product: {
+    label: "Product / Physical goods",
+    subs: [
+      { key: "product_manufacturing", label: "Manufacturing" },
+      { key: "product_retail",        label: "Retail (own store)" },
+      { key: "product_wholesale",     label: "Wholesale / distribution" },
+    ],
+  },
+  realEstate: {
+    label: "Real Estate",
+    subs: [
+      { key: "realestate_development", label: "Property development" },
+      { key: "realestate_rental",      label: "Commercial rental / landlord" },
+      { key: "realestate_agency",      label: "Real estate agency (broker)" },
+      { key: "realestate_reit",        label: "REIT / property fund" },
+    ],
+  },
+  healthcare: {
+    label: "Healthcare",
+    subs: [
+      { key: "health_clinic",   label: "Clinical practice (GP, dental, specialist)" },
+      { key: "health_hospital", label: "Hospital / large facility" },
+      { key: "health_device",   label: "Medical device / diagnostics" },
+      { key: "health_saas",     label: "Health SaaS / telemedicine" },
+      { key: "health_pharmacy", label: "Pharmacy" },
+    ],
+  },
+  education: {
+    label: "Education",
+    subs: [
+      { key: "edu_institution",  label: "K-12 or higher education institution" },
+      { key: "edu_edtech",       label: "EdTech SaaS" },
+      { key: "edu_tutoring",     label: "Tutoring / test prep" },
+      { key: "edu_corptraining", label: "Corporate training" },
+    ],
+  },
+  hospitality: {
+    label: "Hospitality",
+    subs: [
+      { key: "hosp_restaurant", label: "Restaurant" },
+      { key: "hosp_hotel",      label: "Hotel" },
+      { key: "hosp_catering",   label: "Catering / events" },
+    ],
+  },
+}
+
 // -- ASSUMPTION SCHEMA ---------------------------------------------------
 // The single source of truth. Every assumption is defined here.
 
 export const ASSUMPTIONS: AssumptionDefinition[] = [
 
-  // â•â•â• SECTION: BUSINESS INFORMATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: BUSINESS INFORMATION ═══════════════════════════════════
   {
     key: "businessName",
     label: "Business / company name",
@@ -146,12 +272,12 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     section: "business", step: 1, type: "enum", required: true,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     allowedValues: [
-      "Pre-revenue", "Early Revenue (< Â£500k ARR)", "Growth (Â£500k-Â£5m ARR)",
+      "Pre-revenue", "Early Revenue (< £500k ARR)", "Growth (£500k-£5m ARR)",
       "Established (Profitable)", "Mature", "PE-backed", "Public",
     ],
   },
 
-  // â•â•â• SECTION: REVENUE ASSUMPTIONS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: REVENUE ASSUMPTIONS ════════════════════════════════════
   {
     key: "revenueModel",
     label: "Revenue model",
@@ -171,6 +297,46 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     defaultValue: 5, min: 3, max: 10,
   },
+
+  // ═══ SESSION 1 ADDITIONS: driver-based revenue foundation ═══════════
+  {
+    key: "revenueEntryMode",
+    label: "Revenue entry mode",
+    description: "How you'd like to enter revenue: as top-line yearly totals (simple) or via detailed business-specific drivers (recommended for investor-grade models)",
+    section: "revenue", step: 2, type: "enum", required: true,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    allowedValues: ["topLine", "driverBased"],
+    defaultValue: "topLine",
+  },
+  {
+    key: "businessTypeMain",
+    label: "Business type",
+    description: "Main business category (used to select relevant revenue drivers)",
+    section: "revenue", step: 2, type: "enum", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    allowedValues: ["saas", "ecommerce", "services", "product", "realEstate", "healthcare", "education", "hospitality"],
+    helpText: "Only used when revenue entry mode = driverBased",
+  },
+  {
+    key: "businessTypeSub",
+    label: "Business sub-type",
+    description: "Specific sub-category, drives which revenue drivers appear",
+    section: "revenue", step: 2, type: "enum", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    allowedValues: [
+      "saas_b2b", "saas_b2c", "saas_usage",
+      "ecom_d2c", "ecom_marketplace",
+      "services_professional", "services_agency", "services_freelance",
+      "product_manufacturing", "product_retail", "product_wholesale",
+      "realestate_development", "realestate_rental", "realestate_agency", "realestate_reit",
+      "health_clinic", "health_hospital", "health_device", "health_saas", "health_pharmacy",
+      "edu_institution", "edu_edtech", "edu_tutoring", "edu_corptraining",
+      "hosp_restaurant", "hosp_hotel", "hosp_catering",
+    ],
+    helpText: "Only used when revenue entry mode = driverBased",
+  },
+
+  // ═══ Existing top-line revenue fields (used when revenueEntryMode = "topLine") ═══
   {
     key: "year1Revenue",
     label: "Year 1 revenue",
@@ -249,7 +415,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: -50, max: 200, suffix: "%",
     getAISuggestion: (ctx) => {
       const y2 = Number(ctx.currentValues?.revenueGrowthY2) || 15
-      return { value: Math.max(y2 * 0.6, 5), rationale: "Terminal growth trajectory â€” decelerating toward GDP+premium", confidence: "medium" }
+      return { value: Math.max(y2 * 0.6, 5), rationale: "Terminal growth trajectory — decelerating toward GDP+premium", confidence: "medium" }
     },
   },
   {
@@ -268,7 +434,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     },
   },
 
-  // â•â•â• SECTION: COST STRUCTURE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: COST STRUCTURE ═════════════════════════════════════════
   {
     key: "grossMargin",
     label: "Gross margin",
@@ -395,7 +561,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 100, defaultValue: 25, suffix: "%",
   },
 
-  // â•â•â• SECTION: WORKING CAPITAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: WORKING CAPITAL ════════════════════════════════════════
   {
     key: "accountsReceivableDays",
     label: "Debtor days (DSO)",
@@ -425,7 +591,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 365, defaultValue: 0, suffix: "days",
   },
 
-  // â•â•â• SECTION: FUNDING & CASH â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: FUNDING & CASH ═════════════════════════════════════════
   {
     key: "currentCash",
     label: "Current cash balance",
@@ -454,7 +620,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0,
   },
 
-  // â•â•â• SECTION: DEBT & INTEREST â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: DEBT & INTEREST ════════════════════════════════════════
   {
     key: "debtFunding",
     label: "Total debt",
@@ -476,7 +642,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     audit: { industryTypical: "5-10% for UK SME term loans", source: "Bank of England SME lending data 2024" },
   },
 
-  // â•â•â• SECTION: VALUATION â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: VALUATION ══════════════════════════════════════════════
   {
     key: "discountRate",
     label: "Discount rate / WACC",
@@ -507,7 +673,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0, max: 5, defaultValue: 2.5, suffix: "%",
   },
 
-  // â•â•â• SECTION: TAX â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: TAX ════════════════════════════════════════════════════
   {
     key: "taxRate",
     label: "Corporation tax rate",
@@ -517,13 +683,13 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     cellName: "in_taxRate", excelFormat: "0.00%",
     min: 0, max: 50, defaultValue: 19, suffix: "%",
     getAISuggestion: (ctx) => {
-      if (ctx.country === "United Kingdom") return { value: 25, rationale: "UK main rate 25% (marginal relief 19-25% for profits Â£50k-Â£250k)", confidence: "high" }
+      if (ctx.country === "United Kingdom") return { value: 25, rationale: "UK main rate 25% (marginal relief 19-25% for profits £50k-£250k)", confidence: "high" }
       if (ctx.country === "United States") return { value: 21, rationale: "US federal 21% (state adds 0-13%)", confidence: "high" }
       return { value: 20, rationale: "Global average", confidence: "low" }
     },
   },
 
-  // â•â•â• SECTION: EXIT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // ═══ SECTION: EXIT ═══════════════════════════════════════════════════
   {
     key: "exitHorizonYears",
     label: "Exit horizon (years)",
@@ -610,4 +776,3 @@ export const SECTION_TITLES: Record<AssumptionSection, string> = {
   tax: "Tax",
   exit: "Exit Assumptions",
 }
-
