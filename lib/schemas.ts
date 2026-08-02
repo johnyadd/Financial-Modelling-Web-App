@@ -21,22 +21,107 @@ export const step1Schema = z.object({
     .max(500, "Maximum 500 characters"),
 })
 
-export const step2Schema = z.object({
-  modelType: z.string().min(1, "Please select a model type"),
-  projectionYears: z.string().min(1, "Please select projection period"),
-  revenueModel: z.string().min(1, "Please select a revenue model"),
-  currentARR: z.string().optional(),
-  year1Revenue: z.string().min(1, "Please enter Year 1 revenue estimate"),
-  year2Revenue: z.string().min(1, "Please enter Year 2 revenue estimate"),
-  year3Revenue: z.string().min(1, "Please enter Year 3 revenue estimate"),
-  revenueGrowthY1: z.string().min(1, "Please enter Year 1 growth rate"),
-  revenueGrowthY2: z.string().min(1, "Please enter Year 2 growth rate"),
-  revenueGrowthY3: z.string().min(1, "Please enter Year 3 growth rate"),
-  primaryGrowthDriver: z.string().min(1, "Please select primary growth driver"),
-  averageRevenuePerUser: z.string().optional(),
-  expectedCustomersY1: z.string().optional(),
-  churnRate: z.string().optional(),
-})
+// -- Step 2: Revenue --
+//
+// Session 2b-1: driver-based revenue mode support.
+// Top-line revenue fields (year1/2/3Revenue + growth rates) are now .optional().
+// Conditional required-ness is enforced in .superRefine() at the bottom of this schema:
+//   - revenueEntryMode "topLine"    → require year1/2/3 revenue + growth rates
+//   - revenueEntryMode "driverBased" → require businessTypeMain + businessTypeSub
+// If revenueEntryMode is undefined (not yet set by user), it's treated as "topLine".
+//
+// NOTE: revenueEntryMode is .optional() (not .default()) so that z.infer produces
+// a Step2Data shape that matches React Hook Form's Resolver expectations.
+// The default value is provided in the form's defaultValues, not in the schema.
+export const step2Schema = z
+  .object({
+    // Existing top-of-step fields
+    modelType: z.string().min(1, "Please select a model type"),
+    projectionYears: z.string().min(1, "Please select projection period"),
+    revenueModel: z.string().min(1, "Please select a revenue model"),
+    currentARR: z.string().optional(),
+
+    // Session 1 additions — entry mode + business type pickers
+    revenueEntryMode: z.enum(["topLine", "driverBased"]).optional(),
+    businessTypeMain: z.string().optional(),
+    businessTypeSub: z.string().optional(),
+
+    // Top-line revenue fields — now optional, conditionally required by superRefine
+    year1Revenue: z.string().optional(),
+    year2Revenue: z.string().optional(),
+    year3Revenue: z.string().optional(),
+    revenueGrowthY1: z.string().optional(),
+    revenueGrowthY2: z.string().optional(),
+    revenueGrowthY3: z.string().optional(),
+
+    // Existing driver-ish fields (kept for backwards compatibility)
+    primaryGrowthDriver: z.string().optional(),
+    averageRevenuePerUser: z.string().optional(),
+    expectedCustomersY1: z.string().optional(),
+    churnRate: z.string().optional(),
+
+    // Session 2a additions — SaaS B2B drivers
+    saasB2b_startingCustomers: z.string().optional(),
+    saasB2b_newCustomersPerMonth: z.string().optional(),
+    saasB2b_monthlyChurnRate: z.string().optional(),
+    saasB2b_arpu: z.string().optional(),
+    saasB2b_expansionRevenuePct: z.string().optional(),
+
+    // Session 2a additions — E-commerce D2C drivers
+    ecomD2c_monthlyTraffic: z.string().optional(),
+    ecomD2c_conversionRate: z.string().optional(),
+    ecomD2c_averageOrderValue: z.string().optional(),
+    ecomD2c_repeatPurchaseRate: z.string().optional(),
+
+    // Session 2a additions — Professional Services drivers
+    svcProf_billableStaffCount: z.string().optional(),
+    svcProf_billableHoursPerMonth: z.string().optional(),
+    svcProf_utilizationRate: z.string().optional(),
+    svcProf_hourlyRate: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Default to "topLine" when revenueEntryMode is not yet set
+    // (e.g. existing saved models from before Session 2b, or the form not yet mounted)
+    const mode = data.revenueEntryMode ?? "topLine"
+
+    if (mode === "topLine") {
+      // Top-line mode: yearly revenue + growth rates required
+      const topLineRequired: Array<{ key: keyof typeof data; message: string }> = [
+        { key: "year1Revenue",    message: "Please enter Year 1 revenue estimate" },
+        { key: "year2Revenue",    message: "Please enter Year 2 revenue estimate" },
+        { key: "year3Revenue",    message: "Please enter Year 3 revenue estimate" },
+        { key: "revenueGrowthY1", message: "Please enter Year 1 growth rate" },
+        { key: "revenueGrowthY2", message: "Please enter Year 2 growth rate" },
+        { key: "revenueGrowthY3", message: "Please enter Year 3 growth rate" },
+      ]
+      for (const { key, message } of topLineRequired) {
+        const value = data[key]
+        if (typeof value !== "string" || value.trim() === "") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key as string],
+            message,
+          })
+        }
+      }
+    } else {
+      // Driver mode: business type + sub-type required
+      if (!data.businessTypeMain || data.businessTypeMain.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessTypeMain"],
+          message: "Please select a business type",
+        })
+      }
+      if (!data.businessTypeSub || data.businessTypeSub.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessTypeSub"],
+          message: "Please select a business sub-type",
+        })
+      }
+    }
+  })
 
 export const step3Schema = z.object({
   grossMargin: z

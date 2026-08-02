@@ -70,12 +70,21 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
               data.step1.businessStage &&
               data.step1.currency
             )
-          case 2:
+          case 2: {
+            // Session 2b-2: revenue completion depends on entry mode.
+            // Top-line mode requires year1Revenue.
+            // Driver mode requires businessTypeSub (drivers computed downstream).
+            // Missing revenueEntryMode is treated as "topLine" (existing saved models).
+            const mode = data.step2.revenueEntryMode ?? "topLine"
+            const revenueOK = mode === "topLine"
+              ? !!data.step2.year1Revenue
+              : !!data.step2.businessTypeSub
             return !!(
               data.step2.modelType &&
-              data.step2.year1Revenue &&
-              data.step2.revenueModel
+              data.step2.revenueModel &&
+              revenueOK
             )
+          }
           case 3:
             return !!(
               data.step3.grossMargin &&

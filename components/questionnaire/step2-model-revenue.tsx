@@ -1,9 +1,11 @@
-﻿"use client"
+"use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuestionnaireStore } from "@/store/questionnaire-store"
 import { step2Schema, type Step2Data } from "@/lib/schemas"
+import { BUSINESS_TYPE_HIERARCHY, type BusinessTypeMain } from "@/lib/schemas/assumptions"
 import { MODEL_TYPES, REVENUE_MODELS, PROJECTION_YEARS, GROWTH_DRIVERS } from "@/lib/questionnaire-data"
 import { BUSINESS_GOALS } from "@/lib/goals"
 import { useBenchmarks } from "@/hooks/use-benchmarks"
@@ -36,6 +38,13 @@ export function Step2ModelRevenue() {
       projectionYears:       data.step2.projectionYears ?? "",
       revenueModel:          data.step2.revenueModel ?? "",
       currentARR:            data.step2.currentARR ?? "",
+
+      // Session 1: entry mode + business type
+      revenueEntryMode:      data.step2.revenueEntryMode ?? "topLine",
+      businessTypeMain:      data.step2.businessTypeMain ?? "",
+      businessTypeSub:       data.step2.businessTypeSub ?? "",
+
+      // Top-line fields (used when revenueEntryMode = "topLine")
       year1Revenue:          data.step2.year1Revenue ?? "",
       year2Revenue:          data.step2.year2Revenue ?? "",
       year3Revenue:          data.step2.year3Revenue ?? "",
@@ -46,6 +55,25 @@ export function Step2ModelRevenue() {
       averageRevenuePerUser: data.step2.averageRevenuePerUser ?? "",
       expectedCustomersY1:   data.step2.expectedCustomersY1 ?? "",
       churnRate:             data.step2.churnRate ?? "",
+
+      // Session 2a: SaaS B2B drivers
+      saasB2b_startingCustomers:    data.step2.saasB2b_startingCustomers ?? "",
+      saasB2b_newCustomersPerMonth: data.step2.saasB2b_newCustomersPerMonth ?? "",
+      saasB2b_monthlyChurnRate:     data.step2.saasB2b_monthlyChurnRate ?? "",
+      saasB2b_arpu:                 data.step2.saasB2b_arpu ?? "",
+      saasB2b_expansionRevenuePct:  data.step2.saasB2b_expansionRevenuePct ?? "",
+
+      // Session 2a: E-commerce D2C drivers
+      ecomD2c_monthlyTraffic:     data.step2.ecomD2c_monthlyTraffic ?? "",
+      ecomD2c_conversionRate:     data.step2.ecomD2c_conversionRate ?? "",
+      ecomD2c_averageOrderValue:  data.step2.ecomD2c_averageOrderValue ?? "",
+      ecomD2c_repeatPurchaseRate: data.step2.ecomD2c_repeatPurchaseRate ?? "",
+
+      // Session 2a: Professional Services drivers
+      svcProf_billableStaffCount:    data.step2.svcProf_billableStaffCount ?? "",
+      svcProf_billableHoursPerMonth: data.step2.svcProf_billableHoursPerMonth ?? "",
+      svcProf_utilizationRate:       data.step2.svcProf_utilizationRate ?? "",
+      svcProf_hourlyRate:            data.step2.svcProf_hourlyRate ?? "",
     },
   })
 
@@ -54,6 +82,24 @@ export function Step2ModelRevenue() {
   const watchedGrowthY3 = form.watch("revenueGrowthY3")
   const watchedChurn    = form.watch("churnRate")
   const watchedARPU     = form.watch("averageRevenuePerUser")
+
+  // Session 2b-3: mode + business type watches
+  const watchedMode     = form.watch("revenueEntryMode")
+  const watchedTypeMain = form.watch("businessTypeMain")
+  const watchedTypeSub  = form.watch("businessTypeSub")
+
+  const isTopLine = watchedMode !== "driverBased"
+  const isDriver  = watchedMode === "driverBased"
+
+  // When business type main changes, clear sub-type if it doesn't belong to the new main.
+  useEffect(() => {
+    if (!watchedTypeMain) return
+    const validSubs = BUSINESS_TYPE_HIERARCHY[watchedTypeMain as BusinessTypeMain]?.subs || []
+    const validSubKeys = validSubs.map((s) => s.key as string)
+    if (watchedTypeSub && !validSubKeys.includes(watchedTypeSub)) {
+      form.setValue("businessTypeSub", "")
+    }
+  }, [watchedTypeMain, watchedTypeSub, form])
 
   function onSubmit(values: Step2Data) {
     updateStep2(values)
@@ -83,7 +129,7 @@ export function Step2ModelRevenue() {
             <SparklesIcon className="w-4 h-4 text-primary flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">
-                {selectedGoal ? `Goal: ${selectedGoal.icon} ${selectedGoal.title} Â· ` : ""}
+                {selectedGoal ? `Goal: ${selectedGoal.icon} ${selectedGoal.title} · ` : ""}
                 <span className="font-medium text-foreground">
                   Model: {activeModel.label}
                 </span>
@@ -144,187 +190,483 @@ export function Step2ModelRevenue() {
           />
         </div>
 
-        {/* revenue projections */}
-        <div>
-          <h3 className="text-sm font-semibold mb-1">Revenue projections ({currency})</h3>
-          <p className="text-xs text-muted-foreground mb-3">Enter projected annual revenue. Use 0 if pre-revenue.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {(["year1Revenue", "year2Revenue", "year3Revenue"] as const).map((key, i) => (
-              <FormField key={key} control={form.control} name={key}
+        {/* Session 2b-3: revenue entry mode toggle */}
+        <div className="rounded-lg border p-4 bg-muted/10">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold mb-1">Revenue entry mode</h3>
+            <p className="text-xs text-muted-foreground">
+              Top-line is faster. Detailed drivers are more granular and investor-grade — the questionnaire will ask for business-specific inputs, then compute yearly revenue automatically.
+            </p>
+          </div>
+          <div className="flex gap-1 rounded-md border p-1 bg-background">
+            <Button
+              type="button"
+              variant={isTopLine ? "default" : "ghost"}
+              onClick={() => form.setValue("revenueEntryMode", "topLine")}
+              className="flex-1 justify-center text-xs sm:text-sm"
+            >
+              Top-line yearly totals
+            </Button>
+            <Button
+              type="button"
+              variant={isDriver ? "default" : "ghost"}
+              onClick={() => form.setValue("revenueEntryMode", "driverBased")}
+              className="flex-1 justify-center text-xs sm:text-sm"
+            >
+              Detailed drivers
+            </Button>
+          </div>
+        </div>
+
+        {/* Driver mode: business type + sub-type pickers */}
+        {isDriver && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="businessTypeMain"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Select business type" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="max-h-72">
+                      {(Object.keys(BUSINESS_TYPE_HIERARCHY) as BusinessTypeMain[]).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {BUSINESS_TYPE_HIERARCHY[key].label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="businessTypeSub"
+              render={({ field }) => {
+                const subs = watchedTypeMain
+                  ? BUSINESS_TYPE_HIERARCHY[watchedTypeMain as BusinessTypeMain]?.subs || []
+                  : []
+                return (
+                  <FormItem>
+                    <FormLabel>Business sub-type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={!watchedTypeMain}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={watchedTypeMain ? "Select sub-type" : "Choose business type first"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-72">
+                        {subs.map((s) => (
+                          <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
+            />
+          </div>
+        )}
+
+        {/* Driver mode: SaaS B2B drivers */}
+        {isDriver && watchedTypeSub === "saas_b2b" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">SaaS B2B drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="saasB2b_startingCustomers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Year {i + 1} revenue</FormLabel>
+                    <FormLabel>Starting customer count</FormLabel>
                     <FormControl>
-                      <input type="number" min="0" placeholder="e.g. 150000" className={plain} {...field} />
+                      <input type="number" min="0" placeholder="e.g. 20" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Paying customers at month 0</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="saasB2b_newCustomersPerMonth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New customers per month</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 5" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Sales pipeline output per month</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="saasB2b_monthlyChurnRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monthly churn rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" step="0.1" placeholder="e.g. 2" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>B2B benchmark: 1-2% is best-in-class</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="saasB2b_arpu"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ARPU ({currency} per customer/month)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 150" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Blended MRR per customer</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="saasB2b_expansionRevenuePct"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Expansion revenue (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 15" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Upsells and seat expansion. Best-in-class: 15-30%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: E-commerce D2C drivers */}
+        {isDriver && watchedTypeSub === "ecom_d2c" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">E-commerce D2C drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="ecomD2c_monthlyTraffic"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monthly website traffic</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 25000" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Unique sessions/month across all channels</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="ecomD2c_conversionRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Conversion rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" step="0.1" placeholder="e.g. 2.5" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>D2C average: 2-3%. Best-in-class: 4-5%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="ecomD2c_averageOrderValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Average order value ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 65" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Total revenue divided by number of orders</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="ecomD2c_repeatPurchaseRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Repeat purchase rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 25" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Purchase again within 12mo. Benchmark: 20-30%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Professional Services drivers */}
+        {isDriver && watchedTypeSub === "services_professional" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Professional services drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="svcProf_billableStaffCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Billable staff count</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 8" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Consultants who bill clients (exclude ops/admin)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="svcProf_billableHoursPerMonth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Billable hours per staff/month</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="250" placeholder="e.g. 160" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Capacity before utilization. Consulting: 160-180</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="svcProf_utilizationRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Utilization rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 70" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>% of capacity actually billed. Boutique: 60-75%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="svcProf_hourlyRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Blended hourly rate ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 200" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average across all staff levels</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: placeholder for sub-types not yet built */}
+        {isDriver && watchedTypeSub &&
+          !["saas_b2b", "ecom_d2c", "services_professional"].includes(watchedTypeSub) && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+            <p className="text-sm">
+              <SparklesIcon className="w-4 h-4 inline mr-1 -mt-0.5" />
+              Driver fields for this sub-type are coming in the next release. For now, please switch to <strong>Top-line yearly totals</strong> mode.
+            </p>
+          </div>
+        )}
+
+        {/* Top-line mode only: revenue projections */}
+        {isTopLine && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Revenue projections ({currency})</h3>
+            <p className="text-xs text-muted-foreground mb-3">Enter projected annual revenue. Use 0 if pre-revenue.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(["year1Revenue", "year2Revenue", "year3Revenue"] as const).map((key, i) => (
+                <FormField key={key} control={form.control} name={key}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Year {i + 1} revenue</FormLabel>
+                      <FormControl>
+                        <input type="number" min="0" placeholder="e.g. 150000" className={plain} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Top-line mode only: revenue growth rates */}
+        {isTopLine && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Revenue growth rates (%)</h3>
+            <p className="text-xs text-muted-foreground mb-3">Year-on-year revenue growth assumptions.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField control={form.control} name="revenueGrowthY1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year 1 growth %</FormLabel>
+                    <FormControl>
+                      <BenchmarkInput type="number"
+                        placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY1") : "e.g. 120"}
+                        benchmark={getFieldBenchmark("revenueGrowthY1", watchedGrowthY1)}
+                        assumptionKey="revenueGrowthY1"
+                        aiContext={{
+                          industry: data.step1.industry,
+                          subSector: data.step1.subSector,
+                          businessStage: data.step1.businessStage,
+                          currency: data.step1.currency,
+                          country: data.step1.country,
+                          currentValues: {
+                            revenueModel: data.step2.revenueModel,
+                            year1Revenue: data.step2.year1Revenue,
+                          },
+                        }}
+                        onAIAccept={(v) => form.setValue("revenueGrowthY1", String(v))}
+                        {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            ))}
+              <FormField control={form.control} name="revenueGrowthY2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year 2 growth %</FormLabel>
+                    <FormControl>
+                      <BenchmarkInput type="number"
+                        placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY2") : "e.g. 80"}
+                        benchmark={getFieldBenchmark("revenueGrowthY2", watchedGrowthY2)}
+                        assumptionKey="revenueGrowthY2"
+                        aiContext={{
+                          industry: data.step1.industry,
+                          subSector: data.step1.subSector,
+                          businessStage: data.step1.businessStage,
+                          currency: data.step1.currency,
+                          country: data.step1.country,
+                          currentValues: {
+                            revenueGrowthY1: watchedGrowthY1,
+                          },
+                        }}
+                        onAIAccept={(v) => form.setValue("revenueGrowthY2", String(v))}
+                        {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="revenueGrowthY3"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Year 3 growth %</FormLabel>
+                    <FormControl>
+                      <BenchmarkInput type="number"
+                        placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY3") : "e.g. 50"}
+                        benchmark={getFieldBenchmark("revenueGrowthY3", watchedGrowthY3)}
+                        assumptionKey="revenueGrowthY3"
+                        aiContext={{
+                          industry: data.step1.industry,
+                          subSector: data.step1.subSector,
+                          businessStage: data.step1.businessStage,
+                          currency: data.step1.currency,
+                          country: data.step1.country,
+                          currentValues: {
+                            revenueGrowthY2: watchedGrowthY2,
+                          },
+                        }}
+                        onAIAccept={(v) => form.setValue("revenueGrowthY3", String(v))}
+                        {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* revenue growth rates â€” benchmark wired */}
-        <div>
-          <h3 className="text-sm font-semibold mb-1">Revenue growth rates (%)</h3>
-          <p className="text-xs text-muted-foreground mb-3">Year-on-year revenue growth assumptions.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField control={form.control} name="revenueGrowthY1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Year 1 growth %</FormLabel>
-                  <FormControl>
-                    <BenchmarkInput type="number"
-                      placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY1") : "e.g. 120"}
-                      benchmark={getFieldBenchmark("revenueGrowthY1", watchedGrowthY1)}
-                      assumptionKey="revenueGrowthY1"
-                      aiContext={{
-                        industry: data.step1.industry,
-                        subSector: data.step1.subSector,
-                        businessStage: data.step1.businessStage,
-                        currency: data.step1.currency,
-                        country: data.step1.country,
-                        currentValues: {
-                          revenueModel: data.step2.revenueModel,
-                          year1Revenue: data.step2.year1Revenue,
-                        },
-                      }}
-                      onAIAccept={(v) => form.setValue("revenueGrowthY1", String(v))}
-                      {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField control={form.control} name="revenueGrowthY2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Year 2 growth %</FormLabel>
-                  <FormControl>
-                    <BenchmarkInput type="number"
-                      placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY2") : "e.g. 80"}
-                      benchmark={getFieldBenchmark("revenueGrowthY2", watchedGrowthY2)}
-                      assumptionKey="revenueGrowthY2"
-                      aiContext={{
-                        industry: data.step1.industry,
-                        subSector: data.step1.subSector,
-                        businessStage: data.step1.businessStage,
-                        currency: data.step1.currency,
-                        country: data.step1.country,
-                        currentValues: {
-                          revenueGrowthY1: watchedGrowthY1,
-                        },
-                      }}
-                      onAIAccept={(v) => form.setValue("revenueGrowthY2", String(v))}
-                      {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField control={form.control} name="revenueGrowthY3"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Year 3 growth %</FormLabel>
-                  <FormControl>
-                    <BenchmarkInput type="number"
-                      placeholder={hasBenchmarks ? getPlaceholder("revenueGrowthY3") : "e.g. 50"}
-                      benchmark={getFieldBenchmark("revenueGrowthY3", watchedGrowthY3)}
-                      assumptionKey="revenueGrowthY3"
-                      aiContext={{
-                        industry: data.step1.industry,
-                        subSector: data.step1.subSector,
-                        businessStage: data.step1.businessStage,
-                        currency: data.step1.currency,
-                        country: data.step1.country,
-                        currentValues: {
-                          revenueGrowthY2: watchedGrowthY2,
-                        },
-                      }}
-                      onAIAccept={(v) => form.setValue("revenueGrowthY3", String(v))}
-                      {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* Top-line mode only: unit economics */}
+        {isTopLine && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Unit economics (optional)</h3>
+            <p className="text-xs text-muted-foreground mb-3">Helps build a more detailed bottom-up revenue model.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField control={form.control} name="averageRevenuePerUser"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avg. revenue per user ({currency})</FormLabel>
+                    <FormControl>
+                      <BenchmarkInput type="number" min="0"
+                        placeholder={hasBenchmarks ? getPlaceholder("ltv") : "e.g. 1200"}
+                        benchmark={getFieldBenchmark("ltv", watchedARPU)}
+                        showBar={false}
+                        assumptionKey="arpu"
+                        aiContext={{
+                          industry: data.step1.industry,
+                          subSector: data.step1.subSector,
+                          businessStage: data.step1.businessStage,
+                          currency: data.step1.currency,
+                          currentValues: {
+                            revenueModel: data.step2.revenueModel,
+                          },
+                        }}
+                        onAIAccept={(v) => form.setValue("arpu", String(v))}
+                        {...field} />
+                    </FormControl>
+                    <FormDescription>Annual ARPU or contract value</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="expectedCustomersY1"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expected customers – Year 1</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 50" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Paying customers / accounts</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="churnRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Annual churn rate (%)</FormLabel>
+                    <FormControl>
+                      <BenchmarkInput type="number" min="0" max="100"
+                        placeholder={hasBenchmarks ? getPlaceholder("churnRateAnnual") : "e.g. 5"}
+                        benchmark={getFieldBenchmark("churnRateAnnual", watchedChurn)}
+                        assumptionKey="churnRate"
+                        aiContext={{
+                          industry: data.step1.industry,
+                          subSector: data.step1.subSector,
+                          businessStage: data.step1.businessStage,
+                          currentValues: {
+                            revenueModel: data.step2.revenueModel,
+                          },
+                        }}
+                        onAIAccept={(v) => form.setValue("churnRate", String(v))}
+                        {...field} />
+                    </FormControl>
+                    <FormDescription>% of customers lost per year</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* unit economics â€” benchmark wired */}
-        <div>
-          <h3 className="text-sm font-semibold mb-1">Unit economics (optional)</h3>
-          <p className="text-xs text-muted-foreground mb-3">Helps build a more detailed bottom-up revenue model.</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormField control={form.control} name="averageRevenuePerUser"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Avg. revenue per user ({currency})</FormLabel>
-                  <FormControl>
-                    <BenchmarkInput type="number" min="0"
-                      placeholder={hasBenchmarks ? getPlaceholder("ltv") : "e.g. 1200"}
-                      benchmark={getFieldBenchmark("ltv", watchedARPU)}
-                      showBar={false}
-                      assumptionKey="arpu"
-                      aiContext={{
-                        industry: data.step1.industry,
-                        subSector: data.step1.subSector,
-                        businessStage: data.step1.businessStage,
-                        currency: data.step1.currency,
-                        currentValues: {
-                          revenueModel: data.step2.revenueModel,
-                        },
-                      }}
-                      onAIAccept={(v) => form.setValue("arpu", String(v))}
-                      {...field} />
-                  </FormControl>
-                  <FormDescription>Annual ARPU or contract value</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField control={form.control} name="expectedCustomersY1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Expected customers â€“ Year 1</FormLabel>
-                  <FormControl>
-                    <input type="number" min="0" placeholder="e.g. 50" className={plain} {...field} />
-                  </FormControl>
-                  <FormDescription>Paying customers / accounts</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField control={form.control} name="churnRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Annual churn rate (%)</FormLabel>
-                  <FormControl>
-                    <BenchmarkInput type="number" min="0" max="100"
-                      placeholder={hasBenchmarks ? getPlaceholder("churnRateAnnual") : "e.g. 5"}
-                      benchmark={getFieldBenchmark("churnRateAnnual", watchedChurn)}
-                      assumptionKey="churnRate"
-                      aiContext={{
-                        industry: data.step1.industry,
-                        subSector: data.step1.subSector,
-                        businessStage: data.step1.businessStage,
-                        currentValues: {
-                          revenueModel: data.step2.revenueModel,
-                        },
-                      }}
-                      onAIAccept={(v) => form.setValue("churnRate", String(v))}
-                      {...field} />
-                  </FormControl>
-                  <FormDescription>% of customers lost per year</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* primary growth driver */}
+        {/* primary growth driver — shown in both modes */}
         <FormField control={form.control} name="primaryGrowthDriver"
           render={({ field }) => (
             <FormItem>
@@ -354,6 +696,3 @@ export function Step2ModelRevenue() {
     </Form>
   )
 }
-
-
-
