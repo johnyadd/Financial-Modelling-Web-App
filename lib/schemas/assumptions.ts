@@ -60,6 +60,7 @@ export type BusinessTypeSub =
   | "realestate_rental"
   | "realestate_agency"
   | "realestate_reit"
+  | "realestate_shorttermrental"   // Session 3a: Airbnb / B&B / holiday lets
   // Healthcare
   | "health_clinic"
   | "health_hospital"
@@ -180,10 +181,11 @@ export const BUSINESS_TYPE_HIERARCHY: Record<
   realEstate: {
     label: "Real Estate",
     subs: [
-      { key: "realestate_development", label: "Property development" },
-      { key: "realestate_rental",      label: "Commercial rental / landlord" },
-      { key: "realestate_agency",      label: "Real estate agency (broker)" },
-      { key: "realestate_reit",        label: "REIT / property fund" },
+      { key: "realestate_development",     label: "Property development" },
+      { key: "realestate_rental",          label: "Commercial rental / landlord" },
+      { key: "realestate_agency",          label: "Real estate agency (broker)" },
+      { key: "realestate_reit",            label: "REIT / property fund" },
+      { key: "realestate_shorttermrental", label: "Short-term rental (Airbnb, B&B, holiday lets)" },
     ],
   },
   healthcare: {
@@ -329,7 +331,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
       "ecom_d2c", "ecom_marketplace",
       "services_professional", "services_agency", "services_freelance",
       "product_manufacturing", "product_retail", "product_wholesale",
-      "realestate_development", "realestate_rental", "realestate_agency", "realestate_reit",
+      "realestate_development", "realestate_rental", "realestate_agency", "realestate_reit", "realestate_shorttermrental",
       "health_clinic", "health_hospital", "health_device", "health_saas", "health_pharmacy",
       "edu_institution", "edu_edtech", "edu_tutoring", "edu_corptraining",
       "hosp_restaurant", "hosp_hotel", "hosp_catering",
@@ -337,10 +339,10 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     helpText: "Only used when revenue entry mode = driverBased",
   },
 
-  // ═══ SESSION 2a ADDITIONS: driver fields for 3 sub-categories ═══════
-  // Only show in UI when revenueEntryMode = "driverBased" AND businessTypeSub matches.
+  // ═══ SESSION 2a ADDITIONS: driver fields for SaaS B2B / E-com D2C / Services Prof
+  // Only show when revenueEntryMode = "driverBased" AND businessTypeSub matches.
 
-  // ─── SaaS B2B drivers ────────────────────────────────────────────────
+  // ─── SaaS B2B ────────────────────────────────────────────────────────
   {
     key: "saasB2b_startingCustomers",
     label: "Starting customer count",
@@ -404,7 +406,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     defaultValue: 15,
   },
 
-  // ─── E-commerce D2C drivers ──────────────────────────────────────────
+  // ─── E-commerce D2C ──────────────────────────────────────────────────
   {
     key: "ecomD2c_monthlyTraffic",
     label: "Monthly website traffic (sessions)",
@@ -449,7 +451,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     defaultValue: 25,
   },
 
-  // ─── Professional Services drivers ───────────────────────────────────
+  // ─── Professional Services ───────────────────────────────────────────
   {
     key: "svcProf_billableStaffCount",
     label: "Billable staff count",
@@ -491,6 +493,308 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["services_professional"],
+    min: 0,
+  },
+
+  // ═══ SESSION 3a ADDITIONS: driver fields for Product + Real Estate ═══
+  // Only show when revenueEntryMode = "driverBased" AND businessTypeSub matches.
+
+  // ─── Product Manufacturing ───────────────────────────────────────────
+  {
+    key: "productMfg_unitsPerMonth",
+    label: "Units produced per month",
+    description: "Total units manufactured per month at full production",
+    helpText: "For manufacturing driver mode. Consider seasonal variation separately.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_manufacturing"],
+    min: 0,
+  },
+  {
+    key: "productMfg_unitPrice",
+    label: "Unit selling price",
+    description: "Average selling price per unit (before discounts)",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_manufacturing"],
+    min: 0,
+  },
+  {
+    key: "productMfg_capacityUtilization",
+    label: "Capacity utilization",
+    description: "Percentage of maximum manufacturing capacity actually used",
+    helpText: "Well-run SME manufacturers: 70-85%. Startups: 40-60%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_manufacturing"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 75,
+  },
+  {
+    key: "productMfg_sellThroughRate",
+    label: "Sell-through rate",
+    description: "Percentage of produced units actually sold (vs held as inventory)",
+    helpText: "Fashion/apparel: 60-75%. Consumer goods: 85-95%. Fresh food: near 100%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_manufacturing"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 85,
+  },
+
+  // ─── Product Retail (own store) ──────────────────────────────────────
+  {
+    key: "productRetail_storeCount",
+    label: "Store count",
+    description: "Number of physical retail locations",
+    helpText: "For own-store retail. Include only stores you operate (not franchisees).",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_retail"],
+    min: 0,
+  },
+  {
+    key: "productRetail_revenuePerStore",
+    label: "Revenue per store per month",
+    description: "Average monthly revenue per store",
+    helpText: "UK high street SME retail: £15k-£80k/mo typical. Prime location: £100k+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_retail"],
+    min: 0,
+  },
+  {
+    key: "productRetail_sameSalesGrowth",
+    label: "Same-store sales growth",
+    description: "Year-over-year growth in revenue per store (like-for-like)",
+    helpText: "Established retail: 2-5% typical. Newer concepts: 10-20% in early years.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_retail"],
+    min: -50, max: 100, suffix: "%",
+    defaultValue: 3,
+  },
+
+  // ─── Product Wholesale / Distribution ────────────────────────────────
+  {
+    key: "productWhsl_activeAccounts",
+    label: "Active accounts",
+    description: "Number of active buyer accounts (retailers, resellers, distributors)",
+    helpText: "For wholesale/distribution driver mode. Accounts that ordered in the last 90 days.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_wholesale"],
+    min: 0,
+  },
+  {
+    key: "productWhsl_ordersPerAccount",
+    label: "Orders per account per month",
+    description: "Average number of orders each active account places per month",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_wholesale"],
+    min: 0,
+  },
+  {
+    key: "productWhsl_averageOrderValue",
+    label: "Average order value",
+    description: "Average revenue per wholesale order",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["product_wholesale"],
+    min: 0,
+  },
+
+  // ─── Real Estate Development ─────────────────────────────────────────
+  {
+    key: "reDev_unitsBuiltYear",
+    label: "Units built per year",
+    description: "Number of dwelling/commercial units completed per year",
+    helpText: "For property development driver mode. Include full completions only.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_development"],
+    min: 0,
+  },
+  {
+    key: "reDev_averageSellingPrice",
+    label: "Average selling price per unit",
+    description: "Average sale price achieved per completed unit",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_development"],
+    min: 0,
+  },
+  {
+    key: "reDev_sellThroughMonths",
+    label: "Sell-through period (months)",
+    description: "Average months from completion to sale",
+    helpText: "London prime: 3-6 months. Regional: 6-12 months. Slow market: 12-24 months.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_development"],
+    min: 0, max: 60,
+    defaultValue: 9,
+  },
+  {
+    key: "reDev_grossMargin",
+    label: "Gross development margin",
+    description: "Gross profit as % of gross development value",
+    helpText: "Well-run UK developers: 18-25% target. Under 15% suggests problems.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_development"],
+    min: 0, max: 60, suffix: "%",
+    defaultValue: 20,
+  },
+
+  // ─── Real Estate Rental (commercial landlord) ────────────────────────
+  {
+    key: "reRent_rentableUnits",
+    label: "Rentable units",
+    description: "Total number of rentable units in portfolio",
+    helpText: "Units, offices, or lettable space count. Not square footage.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_rental"],
+    min: 0,
+  },
+  {
+    key: "reRent_monthlyRent",
+    label: "Monthly rent per unit",
+    description: "Average monthly rent achieved per unit",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_rental"],
+    min: 0,
+  },
+  {
+    key: "reRent_occupancyRate",
+    label: "Occupancy rate",
+    description: "Percentage of units occupied by paying tenants",
+    helpText: "UK commercial: 88-95% typical. Under 85% suggests demand/pricing issues.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_rental"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 92,
+  },
+  {
+    key: "reRent_otherIncomePct",
+    label: "Other income %",
+    description: "Additional income (parking, storage, service charges) as % of rent",
+    helpText: "UK landlords: 5-15% typical for commercial, less for residential.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_rental"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 8,
+  },
+
+  // ─── Real Estate Agency (broker) ─────────────────────────────────────
+  {
+    key: "reAgcy_monthlyTransactions",
+    label: "Monthly transactions",
+    description: "Average number of completed transactions (sales + lets) per month",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_agency"],
+    min: 0,
+  },
+  {
+    key: "reAgcy_averageTransactionValue",
+    label: "Average transaction value",
+    description: "Average sale/let value per transaction",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_agency"],
+    min: 0,
+  },
+  {
+    key: "reAgcy_commissionRate",
+    label: "Commission rate",
+    description: "Commission as % of transaction value",
+    helpText: "UK residential sales: 1-3% typical. Commercial: 1-2%. Lettings: 8-15% of annual rent.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_agency"],
+    min: 0, max: 30, suffix: "%",
+    defaultValue: 2,
+  },
+
+  // ─── Real Estate REIT / Property Fund ────────────────────────────────
+  {
+    key: "reReit_portfolioProperties",
+    label: "Portfolio properties",
+    description: "Number of properties held in the fund",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_reit"],
+    min: 0,
+  },
+  {
+    key: "reReit_averageYield",
+    label: "Average property yield",
+    description: "Blended net rental yield across the portfolio",
+    helpText: "UK REITs: 4-7% typical net yield. Commercial: 5-8%. Residential: 3-5%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_reit"],
+    min: 0, max: 20, suffix: "%",
+    defaultValue: 5,
+  },
+  {
+    key: "reReit_navGrowth",
+    label: "NAV growth (annual)",
+    description: "Expected annual growth in net asset value from capital appreciation",
+    helpText: "Long-term UK property: 2-4% real growth. Recent decade averaged higher.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_reit"],
+    min: -20, max: 30, suffix: "%",
+    defaultValue: 3,
+  },
+
+  // ─── Real Estate Short-term Rental (Airbnb / B&B / holiday lets) NEW ─
+  {
+    key: "reStr_rentableUnits",
+    label: "Rentable units / rooms",
+    description: "Number of rooms/properties available for short-term letting",
+    helpText: "For short-term rental driver mode. Single hosts might list 1-3 units.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_shorttermrental"],
+    min: 0,
+  },
+  {
+    key: "reStr_averageNightlyRate",
+    label: "Average nightly rate",
+    description: "Average nightly rate achieved (blended peak / off-peak)",
+    helpText: "UK city short-let: £80-200. Coastal/holiday: £120-300. London prime: £200-500+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_shorttermrental"],
+    min: 0,
+  },
+  {
+    key: "reStr_occupancyRate",
+    label: "Occupancy rate",
+    description: "Percentage of nights booked (nights booked / nights available)",
+    helpText: "UK Airbnb hosts: 45-65% typical. Prime city location: 70-85%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_shorttermrental"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 55,
+  },
+  {
+    key: "reStr_cleaningFeePerBooking",
+    label: "Cleaning fee per booking",
+    description: "Average cleaning/service fee charged per booking (revenue passed to host)",
+    helpText: "UK short-lets: £30-80 typical per booking.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["realestate_shorttermrental"],
     min: 0,
   },
 

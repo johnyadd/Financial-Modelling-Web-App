@@ -60,24 +60,68 @@ export const step2Schema = z
     expectedCustomersY1: z.string().optional(),
     churnRate: z.string().optional(),
 
-    // Session 2a additions — SaaS B2B drivers
+    // Session 2a — SaaS B2B drivers
     saasB2b_startingCustomers: z.string().optional(),
     saasB2b_newCustomersPerMonth: z.string().optional(),
     saasB2b_monthlyChurnRate: z.string().optional(),
     saasB2b_arpu: z.string().optional(),
     saasB2b_expansionRevenuePct: z.string().optional(),
 
-    // Session 2a additions — E-commerce D2C drivers
+    // Session 2a — E-commerce D2C drivers
     ecomD2c_monthlyTraffic: z.string().optional(),
     ecomD2c_conversionRate: z.string().optional(),
     ecomD2c_averageOrderValue: z.string().optional(),
     ecomD2c_repeatPurchaseRate: z.string().optional(),
 
-    // Session 2a additions — Professional Services drivers
+    // Session 2a — Professional Services drivers
     svcProf_billableStaffCount: z.string().optional(),
     svcProf_billableHoursPerMonth: z.string().optional(),
     svcProf_utilizationRate: z.string().optional(),
     svcProf_hourlyRate: z.string().optional(),
+
+    // Session 3a — Product Manufacturing drivers
+    productMfg_unitsPerMonth: z.string().optional(),
+    productMfg_unitPrice: z.string().optional(),
+    productMfg_capacityUtilization: z.string().optional(),
+    productMfg_sellThroughRate: z.string().optional(),
+
+    // Session 3a — Product Retail drivers
+    productRetail_storeCount: z.string().optional(),
+    productRetail_revenuePerStore: z.string().optional(),
+    productRetail_sameSalesGrowth: z.string().optional(),
+
+    // Session 3a — Product Wholesale drivers
+    productWhsl_activeAccounts: z.string().optional(),
+    productWhsl_ordersPerAccount: z.string().optional(),
+    productWhsl_averageOrderValue: z.string().optional(),
+
+    // Session 3a — Real Estate Development drivers
+    reDev_unitsBuiltYear: z.string().optional(),
+    reDev_averageSellingPrice: z.string().optional(),
+    reDev_sellThroughMonths: z.string().optional(),
+    reDev_grossMargin: z.string().optional(),
+
+    // Session 3a — Real Estate Rental drivers
+    reRent_rentableUnits: z.string().optional(),
+    reRent_monthlyRent: z.string().optional(),
+    reRent_occupancyRate: z.string().optional(),
+    reRent_otherIncomePct: z.string().optional(),
+
+    // Session 3a — Real Estate Agency drivers
+    reAgcy_monthlyTransactions: z.string().optional(),
+    reAgcy_averageTransactionValue: z.string().optional(),
+    reAgcy_commissionRate: z.string().optional(),
+
+    // Session 3a — Real Estate REIT drivers
+    reReit_portfolioProperties: z.string().optional(),
+    reReit_averageYield: z.string().optional(),
+    reReit_navGrowth: z.string().optional(),
+
+    // Session 3a — Real Estate Short-term Rental drivers (new sub-type)
+    reStr_rentableUnits: z.string().optional(),
+    reStr_averageNightlyRate: z.string().optional(),
+    reStr_occupancyRate: z.string().optional(),
+    reStr_cleaningFeePerBooking: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     // Default to "topLine" when revenueEntryMode is not yet set

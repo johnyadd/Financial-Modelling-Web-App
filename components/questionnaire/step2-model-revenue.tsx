@@ -23,6 +23,17 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeftIcon, ArrowRightIcon, TrendingUpIcon, SparklesIcon } from "lucide-react"
 
+// Sub-types that have driver UI blocks built (used by amber placeholder filter)
+const BUILT_SUB_TYPES = [
+  // Session 2a
+  "saas_b2b", "ecom_d2c", "services_professional",
+  // Session 3a — Product
+  "product_manufacturing", "product_retail", "product_wholesale",
+  // Session 3a — Real Estate
+  "realestate_development", "realestate_rental", "realestate_agency",
+  "realestate_reit", "realestate_shorttermrental",
+]
+
 export function Step2ModelRevenue() {
   const { data, selectedGoalId, updateStep2, nextStep, prevStep } = useQuestionnaireStore()
   const currency = data.step1.currency ?? "GBP"
@@ -44,7 +55,7 @@ export function Step2ModelRevenue() {
       businessTypeMain:      data.step2.businessTypeMain ?? "",
       businessTypeSub:       data.step2.businessTypeSub ?? "",
 
-      // Top-line fields (used when revenueEntryMode = "topLine")
+      // Top-line fields
       year1Revenue:          data.step2.year1Revenue ?? "",
       year2Revenue:          data.step2.year2Revenue ?? "",
       year3Revenue:          data.step2.year3Revenue ?? "",
@@ -74,6 +85,50 @@ export function Step2ModelRevenue() {
       svcProf_billableHoursPerMonth: data.step2.svcProf_billableHoursPerMonth ?? "",
       svcProf_utilizationRate:       data.step2.svcProf_utilizationRate ?? "",
       svcProf_hourlyRate:            data.step2.svcProf_hourlyRate ?? "",
+
+      // Session 3a: Product Manufacturing drivers
+      productMfg_unitsPerMonth:        data.step2.productMfg_unitsPerMonth ?? "",
+      productMfg_unitPrice:            data.step2.productMfg_unitPrice ?? "",
+      productMfg_capacityUtilization:  data.step2.productMfg_capacityUtilization ?? "",
+      productMfg_sellThroughRate:      data.step2.productMfg_sellThroughRate ?? "",
+
+      // Session 3a: Product Retail drivers
+      productRetail_storeCount:      data.step2.productRetail_storeCount ?? "",
+      productRetail_revenuePerStore: data.step2.productRetail_revenuePerStore ?? "",
+      productRetail_sameSalesGrowth: data.step2.productRetail_sameSalesGrowth ?? "",
+
+      // Session 3a: Product Wholesale drivers
+      productWhsl_activeAccounts:    data.step2.productWhsl_activeAccounts ?? "",
+      productWhsl_ordersPerAccount:  data.step2.productWhsl_ordersPerAccount ?? "",
+      productWhsl_averageOrderValue: data.step2.productWhsl_averageOrderValue ?? "",
+
+      // Session 3a: Real Estate Development drivers
+      reDev_unitsBuiltYear:      data.step2.reDev_unitsBuiltYear ?? "",
+      reDev_averageSellingPrice: data.step2.reDev_averageSellingPrice ?? "",
+      reDev_sellThroughMonths:   data.step2.reDev_sellThroughMonths ?? "",
+      reDev_grossMargin:         data.step2.reDev_grossMargin ?? "",
+
+      // Session 3a: Real Estate Rental drivers
+      reRent_rentableUnits:  data.step2.reRent_rentableUnits ?? "",
+      reRent_monthlyRent:    data.step2.reRent_monthlyRent ?? "",
+      reRent_occupancyRate:  data.step2.reRent_occupancyRate ?? "",
+      reRent_otherIncomePct: data.step2.reRent_otherIncomePct ?? "",
+
+      // Session 3a: Real Estate Agency drivers
+      reAgcy_monthlyTransactions:    data.step2.reAgcy_monthlyTransactions ?? "",
+      reAgcy_averageTransactionValue: data.step2.reAgcy_averageTransactionValue ?? "",
+      reAgcy_commissionRate:         data.step2.reAgcy_commissionRate ?? "",
+
+      // Session 3a: Real Estate REIT drivers
+      reReit_portfolioProperties: data.step2.reReit_portfolioProperties ?? "",
+      reReit_averageYield:        data.step2.reReit_averageYield ?? "",
+      reReit_navGrowth:           data.step2.reReit_navGrowth ?? "",
+
+      // Session 3a: Real Estate Short-term Rental drivers (new sub-type)
+      reStr_rentableUnits:         data.step2.reStr_rentableUnits ?? "",
+      reStr_averageNightlyRate:    data.step2.reStr_averageNightlyRate ?? "",
+      reStr_occupancyRate:         data.step2.reStr_occupancyRate ?? "",
+      reStr_cleaningFeePerBooking: data.step2.reStr_cleaningFeePerBooking ?? "",
     },
   })
 
@@ -83,7 +138,7 @@ export function Step2ModelRevenue() {
   const watchedChurn    = form.watch("churnRate")
   const watchedARPU     = form.watch("averageRevenuePerUser")
 
-  // Session 2b-3: mode + business type watches
+  // Mode + business type watches
   const watchedMode     = form.watch("revenueEntryMode")
   const watchedTypeMain = form.watch("businessTypeMain")
   const watchedTypeSub  = form.watch("businessTypeSub")
@@ -190,7 +245,7 @@ export function Step2ModelRevenue() {
           />
         </div>
 
-        {/* Session 2b-3: revenue entry mode toggle */}
+        {/* revenue entry mode toggle */}
         <div className="rounded-lg border p-4 bg-muted/10">
           <div className="mb-3">
             <h3 className="text-sm font-semibold mb-1">Revenue entry mode</h3>
@@ -469,9 +524,440 @@ export function Step2ModelRevenue() {
           </div>
         )}
 
+        {/* Driver mode: Product Manufacturing drivers */}
+        {isDriver && watchedTypeSub === "product_manufacturing" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Manufacturing drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="productMfg_unitsPerMonth"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units produced per month</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 5000" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Units at full production</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productMfg_unitPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit selling price ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 45" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average selling price before discounts</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productMfg_capacityUtilization"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Capacity utilization (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 75" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>SME manufacturers: 70-85% typical</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productMfg_sellThroughRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sell-through rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 85" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>% of units sold vs held as inventory</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Product Retail drivers */}
+        {isDriver && watchedTypeSub === "product_retail" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Retail (own store) drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="productRetail_storeCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Store count</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 4" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Physical locations you operate</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productRetail_revenuePerStore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Revenue per store per month ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 40000" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK high street SME: £15k-£80k/mo</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productRetail_sameSalesGrowth"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Same-store sales growth (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" step="0.1" placeholder="e.g. 3" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Year-over-year like-for-like growth. Established retail: 2-5%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Product Wholesale drivers */}
+        {isDriver && watchedTypeSub === "product_wholesale" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Wholesale / distribution drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="productWhsl_activeAccounts"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Active accounts</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 80" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Accounts that ordered in last 90 days</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productWhsl_ordersPerAccount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Orders per account per month</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" step="0.1" placeholder="e.g. 1.5" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average order frequency per account</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="productWhsl_averageOrderValue"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Average order value ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 1200" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average revenue per wholesale order</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Real Estate Development drivers */}
+        {isDriver && watchedTypeSub === "realestate_development" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Property development drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="reDev_unitsBuiltYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Units built per year</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 12" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Full completions only</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reDev_averageSellingPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avg selling price per unit ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 450000" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average sale price achieved</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reDev_sellThroughMonths"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sell-through period (months)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="60" placeholder="e.g. 9" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>London prime: 3-6mo. Regional: 6-12mo</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reDev_grossMargin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gross development margin (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="60" placeholder="e.g. 20" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK developers: 18-25% target</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Real Estate Rental drivers */}
+        {isDriver && watchedTypeSub === "realestate_rental" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Commercial rental / landlord drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="reRent_rentableUnits"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rentable units</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 24" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Total lettable units (not sq ft)</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reRent_monthlyRent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monthly rent per unit ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 1800" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average monthly rent achieved</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reRent_occupancyRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occupancy rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 92" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK commercial: 88-95% typical</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reRent_otherIncomePct"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Other income %</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 8" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Parking, storage, service charges as % of rent</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Real Estate Agency drivers */}
+        {isDriver && watchedTypeSub === "realestate_agency" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Real estate agency (broker) drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="reAgcy_monthlyTransactions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Monthly transactions</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 8" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Completed sales + lets per month</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reAgcy_averageTransactionValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avg transaction value ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 350000" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Average sale/let value per transaction</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reAgcy_commissionRate"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Commission rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="30" step="0.1" placeholder="e.g. 2" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK residential sales: 1-3%. Lettings: 8-15% of annual rent</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Real Estate REIT drivers */}
+        {isDriver && watchedTypeSub === "realestate_reit" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">REIT / property fund drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="reReit_portfolioProperties"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Portfolio properties</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 15" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Number of properties held</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reReit_averageYield"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Average property yield (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="20" step="0.1" placeholder="e.g. 5" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK REITs: 4-7% net. Commercial: 5-8%. Residential: 3-5%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reReit_navGrowth"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>NAV growth (annual, %)</FormLabel>
+                    <FormControl>
+                      <input type="number" step="0.1" placeholder="e.g. 3" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Long-term UK property: 2-4% real growth</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Driver mode: Real Estate Short-term Rental drivers (Airbnb / B&B / holiday lets) */}
+        {isDriver && watchedTypeSub === "realestate_shorttermrental" && (
+          <div>
+            <h3 className="text-sm font-semibold mb-1">Short-term rental drivers</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Year 1-3 revenue will be computed from these drivers in the next release.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="reStr_rentableUnits"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Rentable units / rooms</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 3" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>Rooms or properties available for short-term letting</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reStr_averageNightlyRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Average nightly rate ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 130" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK city: £80-200. Coastal: £120-300. London prime: £200-500+</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reStr_occupancyRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occupancy rate (%)</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" max="100" placeholder="e.g. 55" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK Airbnb hosts: 45-65% typical. Prime location: 70-85%</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField control={form.control} name="reStr_cleaningFeePerBooking"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cleaning fee per booking ({currency})</FormLabel>
+                    <FormControl>
+                      <input type="number" min="0" placeholder="e.g. 45" className={plain} {...field} />
+                    </FormControl>
+                    <FormDescription>UK short-lets: £30-80 typical per booking</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Driver mode: placeholder for sub-types not yet built */}
-        {isDriver && watchedTypeSub &&
-          !["saas_b2b", "ecom_d2c", "services_professional"].includes(watchedTypeSub) && (
+        {isDriver && watchedTypeSub && !BUILT_SUB_TYPES.includes(watchedTypeSub) && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
             <p className="text-sm">
               <SparklesIcon className="w-4 h-4 inline mr-1 -mt-0.5" />
