@@ -117,11 +117,64 @@ export const step2Schema = z
     reReit_averageYield: z.string().optional(),
     reReit_navGrowth: z.string().optional(),
 
-    // Session 3a — Real Estate Short-term Rental drivers (new sub-type)
+    // Session 3a — Real Estate Short-term Rental drivers
     reStr_rentableUnits: z.string().optional(),
     reStr_averageNightlyRate: z.string().optional(),
     reStr_occupancyRate: z.string().optional(),
     reStr_cleaningFeePerBooking: z.string().optional(),
+
+    // Session 3b — Healthcare Clinic drivers
+    healthClinic_patientVisitsPerMonth: z.string().optional(),
+    healthClinic_averageFeePerVisit: z.string().optional(),
+    healthClinic_providerCount: z.string().optional(),
+    healthClinic_retentionRate: z.string().optional(),
+
+    // Session 3b — Healthcare Hospital drivers
+    healthHosp_bedCount: z.string().optional(),
+    healthHosp_occupancyRate: z.string().optional(),
+    healthHosp_averageDailyRate: z.string().optional(),
+    healthHosp_ancillaryRevenuePct: z.string().optional(),
+
+    // Session 3b — Healthcare Device drivers
+    healthDev_unitsSoldPerQuarter: z.string().optional(),
+    healthDev_unitPrice: z.string().optional(),
+    healthDev_serviceRevenuePct: z.string().optional(),
+    healthDev_installBase: z.string().optional(),
+
+    // Session 3b — Healthcare SaaS drivers
+    healthSaas_startingCustomers: z.string().optional(),
+    healthSaas_newCustomersPerMonth: z.string().optional(),
+    healthSaas_arpu: z.string().optional(),
+    healthSaas_monthlyChurnRate: z.string().optional(),
+
+    // Session 3b — Healthcare Pharmacy drivers
+    healthPharm_dailyFootfall: z.string().optional(),
+    healthPharm_conversionRate: z.string().optional(),
+    healthPharm_basketSize: z.string().optional(),
+    healthPharm_prescriptionRevenuePct: z.string().optional(),
+
+    // Session 3b — Education Institution drivers
+    eduInst_enrolledStudents: z.string().optional(),
+    eduInst_tuitionPerStudent: z.string().optional(),
+    eduInst_capacity: z.string().optional(),
+    eduInst_retentionRate: z.string().optional(),
+
+    // Session 3b — Education EdTech drivers
+    eduTech_monthlySignups: z.string().optional(),
+    eduTech_paidConversionRate: z.string().optional(),
+    eduTech_arpu: z.string().optional(),
+    eduTech_monthlyChurnRate: z.string().optional(),
+
+    // Session 3b — Education Tutoring drivers
+    eduTut_activeStudents: z.string().optional(),
+    eduTut_sessionsPerStudentPerMonth: z.string().optional(),
+    eduTut_pricePerSession: z.string().optional(),
+
+    // Session 3b — Education Corporate Training drivers
+    eduCorp_enterpriseContracts: z.string().optional(),
+    eduCorp_averageContractValue: z.string().optional(),
+    eduCorp_retentionRate: z.string().optional(),
+    eduCorp_expansionPct: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     // Default to "topLine" when revenueEntryMode is not yet set

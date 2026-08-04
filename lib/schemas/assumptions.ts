@@ -60,7 +60,7 @@ export type BusinessTypeSub =
   | "realestate_rental"
   | "realestate_agency"
   | "realestate_reit"
-  | "realestate_shorttermrental"   // Session 3a: Airbnb / B&B / holiday lets
+  | "realestate_shorttermrental"
   // Healthcare
   | "health_clinic"
   | "health_hospital"
@@ -339,9 +339,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     helpText: "Only used when revenue entry mode = driverBased",
   },
 
-  // ═══ SESSION 2a ADDITIONS: driver fields for SaaS B2B / E-com D2C / Services Prof
-  // Only show when revenueEntryMode = "driverBased" AND businessTypeSub matches.
-
+  // ═══ SESSION 2a: SaaS B2B / E-commerce D2C / Professional Services ══
   // ─── SaaS B2B ────────────────────────────────────────────────────────
   {
     key: "saasB2b_startingCustomers",
@@ -496,9 +494,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     min: 0,
   },
 
-  // ═══ SESSION 3a ADDITIONS: driver fields for Product + Real Estate ═══
-  // Only show when revenueEntryMode = "driverBased" AND businessTypeSub matches.
-
+  // ═══ SESSION 3a: Product + Real Estate ═══════════════════════════════
   // ─── Product Manufacturing ───────────────────────────────────────────
   {
     key: "productMfg_unitsPerMonth",
@@ -755,7 +751,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     defaultValue: 3,
   },
 
-  // ─── Real Estate Short-term Rental (Airbnb / B&B / holiday lets) NEW ─
+  // ─── Real Estate Short-term Rental (Airbnb / B&B / holiday lets) ─────
   {
     key: "reStr_rentableUnits",
     label: "Rentable units / rooms",
@@ -796,6 +792,387 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_shorttermrental"],
     min: 0,
+  },
+
+  // ═══ SESSION 3b: Healthcare + Education ══════════════════════════════
+
+  // ─── Healthcare Clinic (GP, dental, specialist) ──────────────────────
+  {
+    key: "healthClinic_patientVisitsPerMonth",
+    label: "Patient visits per month",
+    description: "Total patient consultations/visits across all providers per month",
+    helpText: "For clinical practice driver mode. UK GP: 150-200 visits/provider/mo typical. Specialist: 60-100.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_clinic"],
+    min: 0,
+  },
+  {
+    key: "healthClinic_averageFeePerVisit",
+    label: "Average fee per visit",
+    description: "Blended revenue per patient visit",
+    helpText: "UK private GP: £80-150. Dental consult: £50-120. Specialist consult: £150-300.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_clinic"],
+    min: 0,
+  },
+  {
+    key: "healthClinic_providerCount",
+    label: "Provider count",
+    description: "Number of clinicians/specialists providing billable care",
+    helpText: "Include only those who bill patients (exclude admin, reception).",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_clinic"],
+    min: 0,
+  },
+  {
+    key: "healthClinic_retentionRate",
+    label: "Patient retention rate",
+    description: "Percentage of patients who return within 12 months",
+    helpText: "UK private clinics: 60-80% typical. Chronic care: higher.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_clinic"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 70,
+  },
+
+  // ─── Healthcare Hospital / Large Facility ────────────────────────────
+  {
+    key: "healthHosp_bedCount",
+    label: "Bed count",
+    description: "Total inpatient beds available",
+    helpText: "For hospital driver mode. UK small private hospital: 30-80 beds. Large: 150+.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_hospital"],
+    min: 0,
+  },
+  {
+    key: "healthHosp_occupancyRate",
+    label: "Occupancy rate",
+    description: "Percentage of beds occupied on average",
+    helpText: "UK private hospitals: 60-80% typical. NHS: 85-95%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_hospital"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 70,
+  },
+  {
+    key: "healthHosp_averageDailyRate",
+    label: "Average daily rate per bed",
+    description: "Blended revenue per occupied bed per day",
+    helpText: "UK private: £800-1,500/day typical. Complex care/ICU: much higher.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_hospital"],
+    min: 0,
+  },
+  {
+    key: "healthHosp_ancillaryRevenuePct",
+    label: "Ancillary revenue %",
+    description: "Non-bed revenue (imaging, labs, pharmacy, outpatient) as % of bed revenue",
+    helpText: "UK private hospitals: 30-50% typical. Standalone outpatient facilities: higher.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_hospital"],
+    min: 0, max: 200, suffix: "%",
+    defaultValue: 40,
+  },
+
+  // ─── Healthcare Medical Device / Diagnostics ─────────────────────────
+  {
+    key: "healthDev_unitsSoldPerQuarter",
+    label: "Units sold per quarter",
+    description: "Devices sold per quarter (steady-state)",
+    helpText: "For medical device driver mode. Quarters reflect longer sales cycles.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_device"],
+    min: 0,
+  },
+  {
+    key: "healthDev_unitPrice",
+    label: "Unit selling price",
+    description: "Average price per device sold",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_device"],
+    min: 0,
+  },
+  {
+    key: "healthDev_serviceRevenuePct",
+    label: "Service revenue %",
+    description: "Recurring service/maintenance/consumables revenue as % of hardware revenue",
+    helpText: "Best-in-class med device: 30-50% recurring. High-value diagnostics: can exceed 100%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_device"],
+    min: 0, max: 200, suffix: "%",
+    defaultValue: 30,
+  },
+  {
+    key: "healthDev_installBase",
+    label: "Installed base (units)",
+    description: "Cumulative devices installed at customer sites",
+    helpText: "Drives recurring service revenue over the projection period.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_device"],
+    min: 0,
+  },
+
+  // ─── Healthcare SaaS / Telemedicine ──────────────────────────────────
+  {
+    key: "healthSaas_startingCustomers",
+    label: "Starting customer count",
+    description: "Number of paying customers (clinics/hospitals/patients) at model start",
+    helpText: "For health SaaS driver mode. Enterprise sales: single-digit start typical.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_saas"],
+    min: 0,
+  },
+  {
+    key: "healthSaas_newCustomersPerMonth",
+    label: "New customers per month",
+    description: "Average new paying customers acquired each month",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_saas"],
+    min: 0,
+  },
+  {
+    key: "healthSaas_arpu",
+    label: "ARPU per customer per month",
+    description: "Average monthly revenue per customer",
+    helpText: "Health SaaS often bills per user/provider or per patient. Enterprise deals: £500-5,000/mo per organization.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_saas"],
+    min: 0,
+  },
+  {
+    key: "healthSaas_monthlyChurnRate",
+    label: "Monthly churn rate",
+    description: "Percentage of customers who cancel each month",
+    helpText: "Health SaaS: 1-2% is best-in-class (long procurement cycles favour retention).",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_saas"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 1.5,
+  },
+
+  // ─── Healthcare Pharmacy ─────────────────────────────────────────────
+  {
+    key: "healthPharm_dailyFootfall",
+    label: "Daily footfall",
+    description: "Average unique visitors per day",
+    helpText: "UK community pharmacy: 200-500/day typical. High street prime: 500-1,000+.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_pharmacy"],
+    min: 0,
+  },
+  {
+    key: "healthPharm_conversionRate",
+    label: "Conversion rate",
+    description: "Percentage of visitors who make a purchase",
+    helpText: "Pharmacy: 60-80% typical (higher than most retail due to prescription pickups).",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_pharmacy"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 70,
+  },
+  {
+    key: "healthPharm_basketSize",
+    label: "Average basket size",
+    description: "Average revenue per transaction",
+    helpText: "UK pharmacy: £10-25 typical. Includes retail products and dispensing fees.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_pharmacy"],
+    min: 0,
+  },
+  {
+    key: "healthPharm_prescriptionRevenuePct",
+    label: "Prescription revenue %",
+    description: "NHS/private prescription revenue as % of total",
+    helpText: "UK community pharmacy: typically 60-80% of revenue is NHS-funded prescriptions.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["health_pharmacy"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 70,
+  },
+
+  // ─── Education Institution (K-12 / Higher Ed) ────────────────────────
+  {
+    key: "eduInst_enrolledStudents",
+    label: "Enrolled students",
+    description: "Total students currently enrolled",
+    helpText: "For education institution driver mode. Full-time equivalent.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_institution"],
+    min: 0,
+  },
+  {
+    key: "eduInst_tuitionPerStudent",
+    label: "Tuition per student per year",
+    description: "Average annual tuition revenue per enrolled student",
+    helpText: "UK private secondary: £15k-£45k/yr. Independent primary: £10k-£25k. Higher ed varies widely.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_institution"],
+    min: 0,
+  },
+  {
+    key: "eduInst_capacity",
+    label: "Capacity (max students)",
+    description: "Maximum students the institution can serve at full capacity",
+    helpText: "Drives fill-rate analysis and expansion CAPEX signals.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_institution"],
+    min: 0,
+  },
+  {
+    key: "eduInst_retentionRate",
+    label: "Student retention rate",
+    description: "Percentage of students who continue year-over-year",
+    helpText: "UK independent schools: 88-95% typical. Higher ed dropout rates vary by course.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_institution"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 90,
+  },
+
+  // ─── Education EdTech SaaS ───────────────────────────────────────────
+  {
+    key: "eduTech_monthlySignups",
+    label: "Monthly signups",
+    description: "New free or paid user signups per month",
+    helpText: "For EdTech SaaS driver mode. Includes free tier if applicable.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_edtech"],
+    min: 0,
+  },
+  {
+    key: "eduTech_paidConversionRate",
+    label: "Free-to-paid conversion rate",
+    description: "Percentage of signups who become paying users",
+    helpText: "Freemium EdTech: 2-5% typical. Direct paid model: 100% by definition.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_edtech"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 3,
+  },
+  {
+    key: "eduTech_arpu",
+    label: "ARPU per paid user per month",
+    description: "Average monthly revenue per paying user",
+    helpText: "Consumer EdTech: £10-30/mo. K-12/institutional: often per-seat, £5-20/mo.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_edtech"],
+    min: 0,
+  },
+  {
+    key: "eduTech_monthlyChurnRate",
+    label: "Monthly churn rate",
+    description: "Percentage of paying users who cancel each month",
+    helpText: "Consumer EdTech: 5-15% monthly typical (very churny). Institutional: 1-3%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_edtech"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 8,
+  },
+
+  // ─── Education Tutoring / Test Prep ──────────────────────────────────
+  {
+    key: "eduTut_activeStudents",
+    label: "Active students",
+    description: "Number of students currently taking tutoring sessions",
+    helpText: "For tutoring driver mode. Students who booked at least one session in the last 30 days.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_tutoring"],
+    min: 0,
+  },
+  {
+    key: "eduTut_sessionsPerStudentPerMonth",
+    label: "Sessions per student per month",
+    description: "Average tutoring sessions each active student takes per month",
+    helpText: "1:1 tutoring: 2-4 sessions/mo typical. Test prep intensive: 8+.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_tutoring"],
+    min: 0,
+    defaultValue: 4,
+  },
+  {
+    key: "eduTut_pricePerSession",
+    label: "Price per session",
+    description: "Average revenue per tutoring session",
+    helpText: "UK online 1:1: £25-60. Premium/subject specialists: £60-150. In-person often higher.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_tutoring"],
+    min: 0,
+  },
+
+  // ─── Education Corporate Training ────────────────────────────────────
+  {
+    key: "eduCorp_enterpriseContracts",
+    label: "Enterprise contracts",
+    description: "Number of active corporate customer contracts",
+    helpText: "For corporate training driver mode. Active B2B relationships.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_corptraining"],
+    min: 0,
+  },
+  {
+    key: "eduCorp_averageContractValue",
+    label: "Average contract value (annual)",
+    description: "Blended annual revenue per enterprise contract",
+    helpText: "SME contracts: £5k-£25k/yr. Mid-market: £25k-£150k. Enterprise: £150k+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_corptraining"],
+    min: 0,
+  },
+  {
+    key: "eduCorp_retentionRate",
+    label: "Annual retention rate",
+    description: "Percentage of contracts renewed year-over-year",
+    helpText: "Corporate training: 70-85% typical. Best-in-class L&D: 90%+.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_corptraining"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 80,
+  },
+  {
+    key: "eduCorp_expansionPct",
+    label: "Expansion revenue %",
+    description: "Additional revenue from existing accounts (seats added, modules upsold) as % of base",
+    helpText: "Best-in-class corporate L&D: 10-25% net expansion. Enables NRR > 100%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["edu_corptraining"],
+    min: 0, max: 100, suffix: "%",
+    defaultValue: 10,
   },
 
   // ═══ Existing top-line revenue fields (used when revenueEntryMode = "topLine") ═══
