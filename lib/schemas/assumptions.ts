@@ -84,65 +84,55 @@ export interface AISuggestionContext {
   modelType?: ModelType
   currency?: string
   country?: string
-  currentValues?: Record<string, unknown>  // other assumption values already collected
+  currentValues?: Record<string, unknown>
 }
 
 export interface AISuggestionResult {
   value: number | string
-  rationale: string          // "Why this suggestion" — shown to user
+  rationale: string
   confidence: "low" | "medium" | "high"
-  source?: string            // e.g. "SaaS Capital 2024 benchmark data"
+  source?: string
 }
 
 export interface AssumptionDefinition {
-  // -- Identity --
-  key: string                              // unique identifier used everywhere
-  label: string                            // human-readable label for UI
-  shortLabel?: string                      // shorter label for tables (e.g. Excel)
-  description: string                      // one-line description
-  helpText?: string                        // longer explanation for tooltips
+  key: string
+  label: string
+  shortLabel?: string
+  description: string
+  helpText?: string
 
-  // -- Categorisation --
-  section: AssumptionSection               // groups in UI and export sheets
-  step?: number                            // which questionnaire step (1-6)
-  applicableModels: ModelType[]            // which model types use this
-  applicableStages?: BusinessStage[]       // filter by business stage
-  applicableIndustries?: string[]          // filter by industry (empty = all)
-  applicableBusinessSubTypes?: BusinessTypeSub[]  // Session 2a: driver fields only show for matching sub-types
+  section: AssumptionSection
+  step?: number
+  applicableModels: ModelType[]
+  applicableStages?: BusinessStage[]
+  applicableIndustries?: string[]
+  applicableBusinessSubTypes?: BusinessTypeSub[]
 
-  // -- Data type & validation --
   type: AssumptionType
   required: boolean
   min?: number
   max?: number
-  allowedValues?: string[]                 // for enum types
+  allowedValues?: string[]
 
-  // -- UI display --
   placeholder?: string
-  suffix?: string                          // e.g. "%", "days", "years"
-  prefix?: string                          // e.g. currency symbol
+  suffix?: string
+  prefix?: string
 
-  // -- Excel export --
-  cellName?: string                        // named cell in Excel (e.g. "in_growthY1")
-  excelFormat?: string                     // Excel number format (e.g. "0.0%")
+  cellName?: string
+  excelFormat?: string
 
-  // -- Defaults & AI assistance --
-  defaultValue?: number | string           // static default
+  defaultValue?: number | string
   getAISuggestion?: (ctx: AISuggestionContext) => AISuggestionResult
 
-  // -- Benchmark linkage --
-  benchmarkKey?: string                    // links to benchmark data source
+  benchmarkKey?: string
 
-  // -- Audit trail --
   audit?: {
-    industryTypical?: string               // e.g. "20-50% for mature SMEs"
-    source?: string                        // e.g. "OECD SME data 2024"
-    lastReviewed?: string                  // date last reviewed
+    industryTypical?: string
+    source?: string
+    lastReviewed?: string
   }
 }
 
-// -- SESSION 1 ADDITIONS: business type hierarchy -----------------------
-// Mapping of main types to their sub-categories (used by UI to filter sub-picker)
 export const BUSINESS_TYPE_HIERARCHY: Record<
   BusinessTypeMain,
   { label: string; subs: { key: BusinessTypeSub; label: string }[] }
@@ -216,9 +206,6 @@ export const BUSINESS_TYPE_HIERARCHY: Record<
     ],
   },
 }
-
-// -- ASSUMPTION SCHEMA ---------------------------------------------------
-// The single source of truth. Every assumption is defined here.
 
 export const ASSUMPTIONS: AssumptionDefinition[] = [
 
@@ -301,7 +288,7 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     defaultValue: 5, min: 3, max: 10,
   },
 
-  // ═══ SESSION 1 ADDITIONS: driver-based revenue foundation ═══════════
+  // ═══ SESSION 1: driver-based revenue foundation ═══════════════════════
   {
     key: "revenueEntryMode",
     label: "Revenue entry mode",
@@ -345,24 +332,15 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "saasB2b_startingCustomers",
     label: "Starting customer count",
     description: "Number of paying customers at model start (month 0)",
-    helpText: "Only used for B2B SaaS driver mode",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["saas_b2b"],
     min: 0,
-    getAISuggestion: (ctx) => {
-      const stage = ctx.businessStage || ""
-      if (stage.includes("Pre-revenue")) return { value: 0, rationale: "Pre-revenue businesses start with zero paying customers", confidence: "high" }
-      if (stage.includes("Early Revenue")) return { value: 20, rationale: "Early-revenue B2B SaaS typically has 10-50 customers", confidence: "medium" }
-      if (stage.includes("Growth")) return { value: 100, rationale: "Growth-stage B2B SaaS typically has 50-500 customers", confidence: "medium" }
-      return { value: 50, rationale: "General B2B SaaS starting point", confidence: "low" }
-    },
   },
   {
     key: "saasB2b_newCustomersPerMonth",
     label: "New customers per month",
     description: "Average number of new paying customers acquired each month",
-    helpText: "For B2B SaaS driver mode. Sales pipeline output — think about sales team capacity.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["saas_b2b"],
@@ -372,21 +350,15 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "saasB2b_monthlyChurnRate",
     label: "Monthly churn rate",
     description: "Percentage of customers who cancel each month",
-    helpText: "B2B SaaS: 1-2% monthly is best-in-class. 2-4% is typical. Above 5% is concerning.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["saas_b2b"],
     min: 0, max: 100, suffix: "%",
-    getAISuggestion: (ctx) => {
-      if (ctx.subSector?.toLowerCase().includes("enterprise")) return { value: 0.5, rationale: "Enterprise B2B SaaS: 0.5% monthly (6% annual) is typical", confidence: "high", source: "SaaS Capital 2024" }
-      return { value: 2, rationale: "Mid-market B2B SaaS: 2% monthly (~24% annual) is typical", confidence: "high" }
-    },
   },
   {
     key: "saasB2b_arpu",
     label: "ARPU per customer per month",
     description: "Average revenue per user per month",
-    helpText: "Blended MRR per customer. Include upsells, exclude one-off fees.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["saas_b2b"],
@@ -396,7 +368,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "saasB2b_expansionRevenuePct",
     label: "Expansion revenue %",
     description: "Additional revenue from existing customers (upsells, seat expansion) as % of base",
-    helpText: "Best-in-class B2B SaaS: 15-30%. NRR of 110-130% comes from this.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["saas_b2b"],
@@ -409,7 +380,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "ecomD2c_monthlyTraffic",
     label: "Monthly website traffic (sessions)",
     description: "Total unique sessions per month across all channels",
-    helpText: "For D2C e-commerce driver mode. Include paid + organic + referral traffic.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["ecom_d2c"],
@@ -419,19 +389,16 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "ecomD2c_conversionRate",
     label: "Conversion rate",
     description: "Percentage of sessions that result in a purchase",
-    helpText: "D2C industry average: 2-3%. Best in class: 4-5%. Fashion/apparel often lower (1-2%).",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["ecom_d2c"],
     min: 0, max: 100, suffix: "%",
     defaultValue: 2.5,
-    getAISuggestion: () => ({ value: 2.5, rationale: "D2C e-commerce industry average is 2-3%", confidence: "high", source: "Shopify Commerce Report 2024" }),
   },
   {
     key: "ecomD2c_averageOrderValue",
     label: "Average order value (AOV)",
     description: "Average revenue per order",
-    helpText: "Total revenue divided by number of orders. Focus on driving this up via bundling and upsells.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["ecom_d2c"],
@@ -441,7 +408,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "ecomD2c_repeatPurchaseRate",
     label: "Repeat purchase rate",
     description: "Percentage of customers who purchase again within 12 months",
-    helpText: "D2C benchmark: 20-30%. Consumables/subscription products can hit 60%+.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["ecom_d2c"],
@@ -454,7 +420,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "svcProf_billableStaffCount",
     label: "Billable staff count",
     description: "Number of consultants / professionals who bill clients",
-    helpText: "For professional services driver mode. Exclude admin, ops, marketing headcount.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["services_professional"],
@@ -464,7 +429,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "svcProf_billableHoursPerMonth",
     label: "Billable hours per staff per month",
     description: "Target billable hours per person per month (before utilization)",
-    helpText: "Consulting/legal norms: 160-180 hours/month capacity. Accounting: often 140-160.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["services_professional"],
@@ -475,19 +439,16 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "svcProf_utilizationRate",
     label: "Utilization rate",
     description: "Percentage of billable hours actually billed to clients",
-    helpText: "Big 4 target: 75-85%. Boutique consultancies: 60-75%. Freelance: often 40-60%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["services_professional"],
     min: 0, max: 100, suffix: "%",
     defaultValue: 70,
-    getAISuggestion: () => ({ value: 70, rationale: "Mid-tier professional services target 65-75% utilization", confidence: "high" }),
   },
   {
     key: "svcProf_hourlyRate",
     label: "Blended hourly rate",
     description: "Average billed hourly rate across all staff levels",
-    helpText: "UK mid-tier consulting: £150-300/hr. Boutique specialist: £300-800/hr. Freelance: £75-200/hr.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["services_professional"],
@@ -497,682 +458,778 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
   // ═══ SESSION 3a: Product + Real Estate ═══════════════════════════════
   // ─── Product Manufacturing ───────────────────────────────────────────
   {
-    key: "productMfg_unitsPerMonth",
-    label: "Units produced per month",
+    key: "productMfg_unitsPerMonth", label: "Units produced per month",
     description: "Total units manufactured per month at full production",
-    helpText: "For manufacturing driver mode. Consider seasonal variation separately.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_manufacturing"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_manufacturing"], min: 0,
   },
   {
-    key: "productMfg_unitPrice",
-    label: "Unit selling price",
+    key: "productMfg_unitPrice", label: "Unit selling price",
     description: "Average selling price per unit (before discounts)",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_manufacturing"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_manufacturing"], min: 0,
   },
   {
-    key: "productMfg_capacityUtilization",
-    label: "Capacity utilization",
+    key: "productMfg_capacityUtilization", label: "Capacity utilization",
     description: "Percentage of maximum manufacturing capacity actually used",
-    helpText: "Well-run SME manufacturers: 70-85%. Startups: 40-60%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["product_manufacturing"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 75,
+    min: 0, max: 100, suffix: "%", defaultValue: 75,
   },
   {
-    key: "productMfg_sellThroughRate",
-    label: "Sell-through rate",
+    key: "productMfg_sellThroughRate", label: "Sell-through rate",
     description: "Percentage of produced units actually sold (vs held as inventory)",
-    helpText: "Fashion/apparel: 60-75%. Consumer goods: 85-95%. Fresh food: near 100%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["product_manufacturing"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 85,
+    min: 0, max: 100, suffix: "%", defaultValue: 85,
   },
 
-  // ─── Product Retail (own store) ──────────────────────────────────────
+  // ─── Product Retail ──────────────────────────────────────────────────
   {
-    key: "productRetail_storeCount",
-    label: "Store count",
+    key: "productRetail_storeCount", label: "Store count",
     description: "Number of physical retail locations",
-    helpText: "For own-store retail. Include only stores you operate (not franchisees).",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_retail"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_retail"], min: 0,
   },
   {
-    key: "productRetail_revenuePerStore",
-    label: "Revenue per store per month",
+    key: "productRetail_revenuePerStore", label: "Revenue per store per month",
     description: "Average monthly revenue per store",
-    helpText: "UK high street SME retail: £15k-£80k/mo typical. Prime location: £100k+.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_retail"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_retail"], min: 0,
   },
   {
-    key: "productRetail_sameSalesGrowth",
-    label: "Same-store sales growth",
+    key: "productRetail_sameSalesGrowth", label: "Same-store sales growth",
     description: "Year-over-year growth in revenue per store (like-for-like)",
-    helpText: "Established retail: 2-5% typical. Newer concepts: 10-20% in early years.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["product_retail"],
-    min: -50, max: 100, suffix: "%",
-    defaultValue: 3,
+    min: -50, max: 100, suffix: "%", defaultValue: 3,
   },
 
-  // ─── Product Wholesale / Distribution ────────────────────────────────
+  // ─── Product Wholesale ───────────────────────────────────────────────
   {
-    key: "productWhsl_activeAccounts",
-    label: "Active accounts",
+    key: "productWhsl_activeAccounts", label: "Active accounts",
     description: "Number of active buyer accounts (retailers, resellers, distributors)",
-    helpText: "For wholesale/distribution driver mode. Accounts that ordered in the last 90 days.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_wholesale"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_wholesale"], min: 0,
   },
   {
-    key: "productWhsl_ordersPerAccount",
-    label: "Orders per account per month",
+    key: "productWhsl_ordersPerAccount", label: "Orders per account per month",
     description: "Average number of orders each active account places per month",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_wholesale"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_wholesale"], min: 0,
   },
   {
-    key: "productWhsl_averageOrderValue",
-    label: "Average order value",
+    key: "productWhsl_averageOrderValue", label: "Average order value",
     description: "Average revenue per wholesale order",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["product_wholesale"],
-    min: 0,
+    applicableBusinessSubTypes: ["product_wholesale"], min: 0,
   },
 
   // ─── Real Estate Development ─────────────────────────────────────────
   {
-    key: "reDev_unitsBuiltYear",
-    label: "Units built per year",
+    key: "reDev_unitsBuiltYear", label: "Units built per year",
     description: "Number of dwelling/commercial units completed per year",
-    helpText: "For property development driver mode. Include full completions only.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_development"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_development"], min: 0,
   },
   {
-    key: "reDev_averageSellingPrice",
-    label: "Average selling price per unit",
+    key: "reDev_averageSellingPrice", label: "Average selling price per unit",
     description: "Average sale price achieved per completed unit",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_development"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_development"], min: 0,
   },
   {
-    key: "reDev_sellThroughMonths",
-    label: "Sell-through period (months)",
+    key: "reDev_sellThroughMonths", label: "Sell-through period (months)",
     description: "Average months from completion to sale",
-    helpText: "London prime: 3-6 months. Regional: 6-12 months. Slow market: 12-24 months.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_development"],
-    min: 0, max: 60,
-    defaultValue: 9,
+    min: 0, max: 60, defaultValue: 9,
   },
   {
-    key: "reDev_grossMargin",
-    label: "Gross development margin",
+    key: "reDev_grossMargin", label: "Gross development margin",
     description: "Gross profit as % of gross development value",
-    helpText: "Well-run UK developers: 18-25% target. Under 15% suggests problems.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_development"],
-    min: 0, max: 60, suffix: "%",
-    defaultValue: 20,
+    min: 0, max: 60, suffix: "%", defaultValue: 20,
   },
 
-  // ─── Real Estate Rental (commercial landlord) ────────────────────────
+  // ─── Real Estate Rental ──────────────────────────────────────────────
   {
-    key: "reRent_rentableUnits",
-    label: "Rentable units",
+    key: "reRent_rentableUnits", label: "Rentable units",
     description: "Total number of rentable units in portfolio",
-    helpText: "Units, offices, or lettable space count. Not square footage.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_rental"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_rental"], min: 0,
   },
   {
-    key: "reRent_monthlyRent",
-    label: "Monthly rent per unit",
+    key: "reRent_monthlyRent", label: "Monthly rent per unit",
     description: "Average monthly rent achieved per unit",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_rental"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_rental"], min: 0,
   },
   {
-    key: "reRent_occupancyRate",
-    label: "Occupancy rate",
+    key: "reRent_occupancyRate", label: "Occupancy rate",
     description: "Percentage of units occupied by paying tenants",
-    helpText: "UK commercial: 88-95% typical. Under 85% suggests demand/pricing issues.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_rental"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 92,
+    min: 0, max: 100, suffix: "%", defaultValue: 92,
   },
   {
-    key: "reRent_otherIncomePct",
-    label: "Other income %",
+    key: "reRent_otherIncomePct", label: "Other income %",
     description: "Additional income (parking, storage, service charges) as % of rent",
-    helpText: "UK landlords: 5-15% typical for commercial, less for residential.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_rental"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 8,
+    min: 0, max: 100, suffix: "%", defaultValue: 8,
   },
 
-  // ─── Real Estate Agency (broker) ─────────────────────────────────────
+  // ─── Real Estate Agency ──────────────────────────────────────────────
   {
-    key: "reAgcy_monthlyTransactions",
-    label: "Monthly transactions",
+    key: "reAgcy_monthlyTransactions", label: "Monthly transactions",
     description: "Average number of completed transactions (sales + lets) per month",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_agency"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_agency"], min: 0,
   },
   {
-    key: "reAgcy_averageTransactionValue",
-    label: "Average transaction value",
+    key: "reAgcy_averageTransactionValue", label: "Average transaction value",
     description: "Average sale/let value per transaction",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_agency"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_agency"], min: 0,
   },
   {
-    key: "reAgcy_commissionRate",
-    label: "Commission rate",
+    key: "reAgcy_commissionRate", label: "Commission rate",
     description: "Commission as % of transaction value",
-    helpText: "UK residential sales: 1-3% typical. Commercial: 1-2%. Lettings: 8-15% of annual rent.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_agency"],
-    min: 0, max: 30, suffix: "%",
-    defaultValue: 2,
+    min: 0, max: 30, suffix: "%", defaultValue: 2,
   },
 
-  // ─── Real Estate REIT / Property Fund ────────────────────────────────
+  // ─── Real Estate REIT ────────────────────────────────────────────────
   {
-    key: "reReit_portfolioProperties",
-    label: "Portfolio properties",
+    key: "reReit_portfolioProperties", label: "Portfolio properties",
     description: "Number of properties held in the fund",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_reit"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_reit"], min: 0,
   },
   {
-    key: "reReit_averageYield",
-    label: "Average property yield",
+    key: "reReit_averageYield", label: "Average property yield",
     description: "Blended net rental yield across the portfolio",
-    helpText: "UK REITs: 4-7% typical net yield. Commercial: 5-8%. Residential: 3-5%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_reit"],
-    min: 0, max: 20, suffix: "%",
-    defaultValue: 5,
+    min: 0, max: 20, suffix: "%", defaultValue: 5,
   },
   {
-    key: "reReit_navGrowth",
-    label: "NAV growth (annual)",
+    key: "reReit_navGrowth", label: "NAV growth (annual)",
     description: "Expected annual growth in net asset value from capital appreciation",
-    helpText: "Long-term UK property: 2-4% real growth. Recent decade averaged higher.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_reit"],
-    min: -20, max: 30, suffix: "%",
-    defaultValue: 3,
+    min: -20, max: 30, suffix: "%", defaultValue: 3,
   },
 
-  // ─── Real Estate Short-term Rental (Airbnb / B&B / holiday lets) ─────
+  // ─── Real Estate Short-term Rental ───────────────────────────────────
   {
-    key: "reStr_rentableUnits",
-    label: "Rentable units / rooms",
+    key: "reStr_rentableUnits", label: "Rentable units / rooms",
     description: "Number of rooms/properties available for short-term letting",
-    helpText: "For short-term rental driver mode. Single hosts might list 1-3 units.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_shorttermrental"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_shorttermrental"], min: 0,
   },
   {
-    key: "reStr_averageNightlyRate",
-    label: "Average nightly rate",
+    key: "reStr_averageNightlyRate", label: "Average nightly rate",
     description: "Average nightly rate achieved (blended peak / off-peak)",
-    helpText: "UK city short-let: £80-200. Coastal/holiday: £120-300. London prime: £200-500+.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_shorttermrental"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_shorttermrental"], min: 0,
   },
   {
-    key: "reStr_occupancyRate",
-    label: "Occupancy rate",
+    key: "reStr_occupancyRate", label: "Occupancy rate",
     description: "Percentage of nights booked (nights booked / nights available)",
-    helpText: "UK Airbnb hosts: 45-65% typical. Prime city location: 70-85%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["realestate_shorttermrental"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 55,
+    min: 0, max: 100, suffix: "%", defaultValue: 55,
   },
   {
-    key: "reStr_cleaningFeePerBooking",
-    label: "Cleaning fee per booking",
+    key: "reStr_cleaningFeePerBooking", label: "Cleaning fee per booking",
     description: "Average cleaning/service fee charged per booking (revenue passed to host)",
-    helpText: "UK short-lets: £30-80 typical per booking.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["realestate_shorttermrental"],
-    min: 0,
+    applicableBusinessSubTypes: ["realestate_shorttermrental"], min: 0,
   },
 
   // ═══ SESSION 3b: Healthcare + Education ══════════════════════════════
-
-  // ─── Healthcare Clinic (GP, dental, specialist) ──────────────────────
+  // ─── Healthcare Clinic ───────────────────────────────────────────────
   {
-    key: "healthClinic_patientVisitsPerMonth",
-    label: "Patient visits per month",
+    key: "healthClinic_patientVisitsPerMonth", label: "Patient visits per month",
     description: "Total patient consultations/visits across all providers per month",
-    helpText: "For clinical practice driver mode. UK GP: 150-200 visits/provider/mo typical. Specialist: 60-100.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_clinic"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_clinic"], min: 0,
   },
   {
-    key: "healthClinic_averageFeePerVisit",
-    label: "Average fee per visit",
+    key: "healthClinic_averageFeePerVisit", label: "Average fee per visit",
     description: "Blended revenue per patient visit",
-    helpText: "UK private GP: £80-150. Dental consult: £50-120. Specialist consult: £150-300.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_clinic"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_clinic"], min: 0,
   },
   {
-    key: "healthClinic_providerCount",
-    label: "Provider count",
+    key: "healthClinic_providerCount", label: "Provider count",
     description: "Number of clinicians/specialists providing billable care",
-    helpText: "Include only those who bill patients (exclude admin, reception).",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_clinic"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_clinic"], min: 0,
   },
   {
-    key: "healthClinic_retentionRate",
-    label: "Patient retention rate",
+    key: "healthClinic_retentionRate", label: "Patient retention rate",
     description: "Percentage of patients who return within 12 months",
-    helpText: "UK private clinics: 60-80% typical. Chronic care: higher.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_clinic"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 70,
+    min: 0, max: 100, suffix: "%", defaultValue: 70,
   },
 
-  // ─── Healthcare Hospital / Large Facility ────────────────────────────
+  // ─── Healthcare Hospital ─────────────────────────────────────────────
   {
-    key: "healthHosp_bedCount",
-    label: "Bed count",
+    key: "healthHosp_bedCount", label: "Bed count",
     description: "Total inpatient beds available",
-    helpText: "For hospital driver mode. UK small private hospital: 30-80 beds. Large: 150+.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_hospital"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_hospital"], min: 0,
   },
   {
-    key: "healthHosp_occupancyRate",
-    label: "Occupancy rate",
+    key: "healthHosp_occupancyRate", label: "Occupancy rate",
     description: "Percentage of beds occupied on average",
-    helpText: "UK private hospitals: 60-80% typical. NHS: 85-95%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_hospital"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 70,
+    min: 0, max: 100, suffix: "%", defaultValue: 70,
   },
   {
-    key: "healthHosp_averageDailyRate",
-    label: "Average daily rate per bed",
+    key: "healthHosp_averageDailyRate", label: "Average daily rate per bed",
     description: "Blended revenue per occupied bed per day",
-    helpText: "UK private: £800-1,500/day typical. Complex care/ICU: much higher.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_hospital"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_hospital"], min: 0,
   },
   {
-    key: "healthHosp_ancillaryRevenuePct",
-    label: "Ancillary revenue %",
+    key: "healthHosp_ancillaryRevenuePct", label: "Ancillary revenue %",
     description: "Non-bed revenue (imaging, labs, pharmacy, outpatient) as % of bed revenue",
-    helpText: "UK private hospitals: 30-50% typical. Standalone outpatient facilities: higher.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_hospital"],
-    min: 0, max: 200, suffix: "%",
-    defaultValue: 40,
+    min: 0, max: 200, suffix: "%", defaultValue: 40,
   },
 
-  // ─── Healthcare Medical Device / Diagnostics ─────────────────────────
+  // ─── Healthcare Device ───────────────────────────────────────────────
   {
-    key: "healthDev_unitsSoldPerQuarter",
-    label: "Units sold per quarter",
+    key: "healthDev_unitsSoldPerQuarter", label: "Units sold per quarter",
     description: "Devices sold per quarter (steady-state)",
-    helpText: "For medical device driver mode. Quarters reflect longer sales cycles.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_device"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_device"], min: 0,
   },
   {
-    key: "healthDev_unitPrice",
-    label: "Unit selling price",
+    key: "healthDev_unitPrice", label: "Unit selling price",
     description: "Average price per device sold",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_device"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_device"], min: 0,
   },
   {
-    key: "healthDev_serviceRevenuePct",
-    label: "Service revenue %",
+    key: "healthDev_serviceRevenuePct", label: "Service revenue %",
     description: "Recurring service/maintenance/consumables revenue as % of hardware revenue",
-    helpText: "Best-in-class med device: 30-50% recurring. High-value diagnostics: can exceed 100%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_device"],
-    min: 0, max: 200, suffix: "%",
-    defaultValue: 30,
+    min: 0, max: 200, suffix: "%", defaultValue: 30,
   },
   {
-    key: "healthDev_installBase",
-    label: "Installed base (units)",
+    key: "healthDev_installBase", label: "Installed base (units)",
     description: "Cumulative devices installed at customer sites",
-    helpText: "Drives recurring service revenue over the projection period.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_device"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_device"], min: 0,
   },
 
-  // ─── Healthcare SaaS / Telemedicine ──────────────────────────────────
+  // ─── Healthcare SaaS ─────────────────────────────────────────────────
   {
-    key: "healthSaas_startingCustomers",
-    label: "Starting customer count",
+    key: "healthSaas_startingCustomers", label: "Starting customer count",
     description: "Number of paying customers (clinics/hospitals/patients) at model start",
-    helpText: "For health SaaS driver mode. Enterprise sales: single-digit start typical.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_saas"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_saas"], min: 0,
   },
   {
-    key: "healthSaas_newCustomersPerMonth",
-    label: "New customers per month",
+    key: "healthSaas_newCustomersPerMonth", label: "New customers per month",
     description: "Average new paying customers acquired each month",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_saas"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_saas"], min: 0,
   },
   {
-    key: "healthSaas_arpu",
-    label: "ARPU per customer per month",
+    key: "healthSaas_arpu", label: "ARPU per customer per month",
     description: "Average monthly revenue per customer",
-    helpText: "Health SaaS often bills per user/provider or per patient. Enterprise deals: £500-5,000/mo per organization.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_saas"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_saas"], min: 0,
   },
   {
-    key: "healthSaas_monthlyChurnRate",
-    label: "Monthly churn rate",
+    key: "healthSaas_monthlyChurnRate", label: "Monthly churn rate",
     description: "Percentage of customers who cancel each month",
-    helpText: "Health SaaS: 1-2% is best-in-class (long procurement cycles favour retention).",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_saas"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 1.5,
+    min: 0, max: 100, suffix: "%", defaultValue: 1.5,
   },
 
   // ─── Healthcare Pharmacy ─────────────────────────────────────────────
   {
-    key: "healthPharm_dailyFootfall",
-    label: "Daily footfall",
+    key: "healthPharm_dailyFootfall", label: "Daily footfall",
     description: "Average unique visitors per day",
-    helpText: "UK community pharmacy: 200-500/day typical. High street prime: 500-1,000+.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_pharmacy"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_pharmacy"], min: 0,
   },
   {
-    key: "healthPharm_conversionRate",
-    label: "Conversion rate",
+    key: "healthPharm_conversionRate", label: "Conversion rate",
     description: "Percentage of visitors who make a purchase",
-    helpText: "Pharmacy: 60-80% typical (higher than most retail due to prescription pickups).",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_pharmacy"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 70,
+    min: 0, max: 100, suffix: "%", defaultValue: 70,
   },
   {
-    key: "healthPharm_basketSize",
-    label: "Average basket size",
+    key: "healthPharm_basketSize", label: "Average basket size",
     description: "Average revenue per transaction",
-    helpText: "UK pharmacy: £10-25 typical. Includes retail products and dispensing fees.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["health_pharmacy"],
-    min: 0,
+    applicableBusinessSubTypes: ["health_pharmacy"], min: 0,
   },
   {
-    key: "healthPharm_prescriptionRevenuePct",
-    label: "Prescription revenue %",
+    key: "healthPharm_prescriptionRevenuePct", label: "Prescription revenue %",
     description: "NHS/private prescription revenue as % of total",
-    helpText: "UK community pharmacy: typically 60-80% of revenue is NHS-funded prescriptions.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["health_pharmacy"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 70,
+    min: 0, max: 100, suffix: "%", defaultValue: 70,
   },
 
-  // ─── Education Institution (K-12 / Higher Ed) ────────────────────────
+  // ─── Education Institution ───────────────────────────────────────────
   {
-    key: "eduInst_enrolledStudents",
-    label: "Enrolled students",
+    key: "eduInst_enrolledStudents", label: "Enrolled students",
     description: "Total students currently enrolled",
-    helpText: "For education institution driver mode. Full-time equivalent.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_institution"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_institution"], min: 0,
   },
   {
-    key: "eduInst_tuitionPerStudent",
-    label: "Tuition per student per year",
+    key: "eduInst_tuitionPerStudent", label: "Tuition per student per year",
     description: "Average annual tuition revenue per enrolled student",
-    helpText: "UK private secondary: £15k-£45k/yr. Independent primary: £10k-£25k. Higher ed varies widely.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_institution"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_institution"], min: 0,
   },
   {
-    key: "eduInst_capacity",
-    label: "Capacity (max students)",
+    key: "eduInst_capacity", label: "Capacity (max students)",
     description: "Maximum students the institution can serve at full capacity",
-    helpText: "Drives fill-rate analysis and expansion CAPEX signals.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_institution"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_institution"], min: 0,
   },
   {
-    key: "eduInst_retentionRate",
-    label: "Student retention rate",
+    key: "eduInst_retentionRate", label: "Student retention rate",
     description: "Percentage of students who continue year-over-year",
-    helpText: "UK independent schools: 88-95% typical. Higher ed dropout rates vary by course.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_institution"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 90,
+    min: 0, max: 100, suffix: "%", defaultValue: 90,
   },
 
-  // ─── Education EdTech SaaS ───────────────────────────────────────────
+  // ─── Education EdTech ────────────────────────────────────────────────
   {
-    key: "eduTech_monthlySignups",
-    label: "Monthly signups",
+    key: "eduTech_monthlySignups", label: "Monthly signups",
     description: "New free or paid user signups per month",
-    helpText: "For EdTech SaaS driver mode. Includes free tier if applicable.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_edtech"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_edtech"], min: 0,
   },
   {
-    key: "eduTech_paidConversionRate",
-    label: "Free-to-paid conversion rate",
+    key: "eduTech_paidConversionRate", label: "Free-to-paid conversion rate",
     description: "Percentage of signups who become paying users",
-    helpText: "Freemium EdTech: 2-5% typical. Direct paid model: 100% by definition.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_edtech"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 3,
+    min: 0, max: 100, suffix: "%", defaultValue: 3,
   },
   {
-    key: "eduTech_arpu",
-    label: "ARPU per paid user per month",
+    key: "eduTech_arpu", label: "ARPU per paid user per month",
     description: "Average monthly revenue per paying user",
-    helpText: "Consumer EdTech: £10-30/mo. K-12/institutional: often per-seat, £5-20/mo.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_edtech"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_edtech"], min: 0,
   },
   {
-    key: "eduTech_monthlyChurnRate",
-    label: "Monthly churn rate",
+    key: "eduTech_monthlyChurnRate", label: "Monthly churn rate",
     description: "Percentage of paying users who cancel each month",
-    helpText: "Consumer EdTech: 5-15% monthly typical (very churny). Institutional: 1-3%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_edtech"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 8,
+    min: 0, max: 100, suffix: "%", defaultValue: 8,
   },
 
-  // ─── Education Tutoring / Test Prep ──────────────────────────────────
+  // ─── Education Tutoring ──────────────────────────────────────────────
   {
-    key: "eduTut_activeStudents",
-    label: "Active students",
+    key: "eduTut_activeStudents", label: "Active students",
     description: "Number of students currently taking tutoring sessions",
-    helpText: "For tutoring driver mode. Students who booked at least one session in the last 30 days.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_tutoring"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_tutoring"], min: 0,
   },
   {
-    key: "eduTut_sessionsPerStudentPerMonth",
-    label: "Sessions per student per month",
+    key: "eduTut_sessionsPerStudentPerMonth", label: "Sessions per student per month",
     description: "Average tutoring sessions each active student takes per month",
-    helpText: "1:1 tutoring: 2-4 sessions/mo typical. Test prep intensive: 8+.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_tutoring"],
-    min: 0,
-    defaultValue: 4,
+    min: 0, defaultValue: 4,
   },
   {
-    key: "eduTut_pricePerSession",
-    label: "Price per session",
+    key: "eduTut_pricePerSession", label: "Price per session",
     description: "Average revenue per tutoring session",
-    helpText: "UK online 1:1: £25-60. Premium/subject specialists: £60-150. In-person often higher.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_tutoring"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_tutoring"], min: 0,
   },
 
   // ─── Education Corporate Training ────────────────────────────────────
   {
-    key: "eduCorp_enterpriseContracts",
-    label: "Enterprise contracts",
+    key: "eduCorp_enterpriseContracts", label: "Enterprise contracts",
     description: "Number of active corporate customer contracts",
-    helpText: "For corporate training driver mode. Active B2B relationships.",
     section: "revenue", step: 2, type: "number", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_corptraining"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_corptraining"], min: 0,
   },
   {
-    key: "eduCorp_averageContractValue",
-    label: "Average contract value (annual)",
+    key: "eduCorp_averageContractValue", label: "Average contract value (annual)",
     description: "Blended annual revenue per enterprise contract",
-    helpText: "SME contracts: £5k-£25k/yr. Mid-market: £25k-£150k. Enterprise: £150k+.",
     section: "revenue", step: 2, type: "currency", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
-    applicableBusinessSubTypes: ["edu_corptraining"],
-    min: 0,
+    applicableBusinessSubTypes: ["edu_corptraining"], min: 0,
   },
   {
-    key: "eduCorp_retentionRate",
-    label: "Annual retention rate",
+    key: "eduCorp_retentionRate", label: "Annual retention rate",
     description: "Percentage of contracts renewed year-over-year",
-    helpText: "Corporate training: 70-85% typical. Best-in-class L&D: 90%+.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_corptraining"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 80,
+    min: 0, max: 100, suffix: "%", defaultValue: 80,
   },
   {
-    key: "eduCorp_expansionPct",
-    label: "Expansion revenue %",
+    key: "eduCorp_expansionPct", label: "Expansion revenue %",
     description: "Additional revenue from existing accounts (seats added, modules upsold) as % of base",
-    helpText: "Best-in-class corporate L&D: 10-25% net expansion. Enables NRR > 100%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
     applicableBusinessSubTypes: ["edu_corptraining"],
-    min: 0, max: 100, suffix: "%",
-    defaultValue: 10,
+    min: 0, max: 100, suffix: "%", defaultValue: 10,
+  },
+
+  // ═══ SESSION 3c: Remaining SaaS + E-com + Services + Hospitality ═════
+
+  // ─── SaaS B2C ────────────────────────────────────────────────────────
+  {
+    key: "saasB2c_monthlySignups", label: "Monthly signups",
+    description: "New user signups per month (free or paid)",
+    helpText: "For B2C SaaS driver mode. Includes both free trial and direct paid signups.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2c"], min: 0,
+  },
+  {
+    key: "saasB2c_paidConversionRate", label: "Free-to-paid conversion rate",
+    description: "Percentage of signups who become paying users",
+    helpText: "Consumer SaaS freemium: 2-5% typical. Trial-to-paid: 15-30%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2c"],
+    min: 0, max: 100, suffix: "%", defaultValue: 4,
+  },
+  {
+    key: "saasB2c_arpu", label: "ARPU per paid user per month",
+    description: "Average monthly revenue per paying user",
+    helpText: "Consumer SaaS: £5-25/mo typical. Premium/prosumer: £25-100/mo.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2c"], min: 0,
+  },
+  {
+    key: "saasB2c_monthlyChurnRate", label: "Monthly churn rate",
+    description: "Percentage of paying users who cancel each month",
+    helpText: "Consumer SaaS: 5-8% monthly typical. Best-in-class: 3-5%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2c"],
+    min: 0, max: 100, suffix: "%", defaultValue: 6,
+  },
+  {
+    key: "saasB2c_viralCoefficient", label: "Viral coefficient (K-factor)",
+    description: "New users generated per existing user (0 = no virality, 1 = self-sustaining)",
+    helpText: "Most B2C SaaS: 0-0.3. Strong network effects: 0.3-0.7. Viral hits: 0.7+.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_b2c"],
+    min: 0, max: 5, defaultValue: 0.1,
+  },
+
+  // ─── SaaS Usage-based ────────────────────────────────────────────────
+  {
+    key: "saasUsage_activeAccounts", label: "Active accounts",
+    description: "Number of customer accounts consuming the service",
+    helpText: "For usage-based SaaS driver mode. Accounts with at least one paid unit last month.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_usage"], min: 0,
+  },
+  {
+    key: "saasUsage_avgUnitsPerAccountPerMonth", label: "Avg units per account per month",
+    description: "Average consumption unit count per account per month",
+    helpText: "Units are the primary billing metric (API calls, GB, seats, transactions).",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_usage"], min: 0,
+  },
+  {
+    key: "saasUsage_pricePerUnit", label: "Price per unit",
+    description: "Revenue per billable unit",
+    helpText: "Blended across pricing tiers. Ignore rate-card discounts.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_usage"], min: 0,
+  },
+  {
+    key: "saasUsage_monthlyAccountChurnRate", label: "Monthly account churn rate",
+    description: "Percentage of accounts that stop consuming each month",
+    helpText: "Usage-based SaaS: 3-6% monthly typical. Enterprise usage: 1-3%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["saas_usage"],
+    min: 0, max: 100, suffix: "%", defaultValue: 4,
+  },
+
+  // ─── E-commerce Marketplace ──────────────────────────────────────────
+  {
+    key: "ecomMkt_monthlyGmv", label: "Monthly GMV",
+    description: "Gross merchandise value transacted per month",
+    helpText: "For marketplace driver mode. Total value of goods/services sold, not commission.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_marketplace"], min: 0,
+  },
+  {
+    key: "ecomMkt_takeRate", label: "Take rate",
+    description: "Marketplace commission as % of GMV",
+    helpText: "eBay: ~10-12%. Etsy: ~7%. Uber Eats: ~20-30%. Airbnb: ~13-15%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_marketplace"],
+    min: 0, max: 50, suffix: "%", defaultValue: 10,
+  },
+  {
+    key: "ecomMkt_activeSellers", label: "Active sellers",
+    description: "Number of sellers with at least one transaction last month",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_marketplace"], min: 0,
+  },
+  {
+    key: "ecomMkt_transactionsPerSellerPerMonth", label: "Transactions per seller per month",
+    description: "Average transaction count per active seller per month",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["ecom_marketplace"], min: 0,
+  },
+
+  // ─── Services Agency (marketing, creative) ───────────────────────────
+  {
+    key: "svcAgcy_retainedClients", label: "Retained clients",
+    description: "Number of clients on recurring retainer contracts",
+    helpText: "For agency driver mode. Long-term recurring clients (not project-only).",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_agency"], min: 0,
+  },
+  {
+    key: "svcAgcy_arpaPerMonth", label: "ARPA per month",
+    description: "Average revenue per retained account per month",
+    helpText: "Boutique agency retainers: £3k-£15k/mo. Mid-market: £15k-£50k/mo. Large: £50k+/mo.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_agency"], min: 0,
+  },
+  {
+    key: "svcAgcy_newProjectsPerMonth", label: "New projects per month",
+    description: "Average number of new one-off projects won per month",
+    helpText: "Excludes recurring retainer work. Fresh project engagements only.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_agency"], min: 0,
+  },
+  {
+    key: "svcAgcy_averageProjectValue", label: "Average project value",
+    description: "Average revenue per project",
+    helpText: "Small project: £3k-£15k. Mid: £15k-£75k. Large: £75k+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_agency"], min: 0,
+  },
+
+  // ─── Services Freelance ──────────────────────────────────────────────
+  {
+    key: "svcFree_chargeableHoursPerWeek", label: "Chargeable hours per week",
+    description: "Billable hours you plan to bill per week",
+    helpText: "For freelance driver mode. Realistic max is ~30-35 hrs/wk after admin/sales/leave.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_freelance"],
+    min: 0, max: 60, defaultValue: 25,
+  },
+  {
+    key: "svcFree_weeklyRate", label: "Weekly rate",
+    description: "Blended weekly revenue at target chargeable hours",
+    helpText: "Alternative: enter hourly × chargeable hours. £2k-£5k/wk typical for UK contractors.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_freelance"], min: 0,
+  },
+  {
+    key: "svcFree_weeksWorkedPerYear", label: "Weeks worked per year",
+    description: "Actual working weeks after holiday, sickness, gaps",
+    helpText: "Realistic solo: 42-46 weeks/year (accounts for holiday, gaps between contracts).",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["services_freelance"],
+    min: 0, max: 52, defaultValue: 44,
+  },
+
+  // ─── Hospitality Restaurant ──────────────────────────────────────────
+  {
+    key: "hospRest_seatCount", label: "Seat count",
+    description: "Total dining seats available",
+    helpText: "For restaurant driver mode. Actual seats in service, not maximum capacity.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_restaurant"], min: 0,
+  },
+  {
+    key: "hospRest_tableTurnsPerDay", label: "Table turns per day",
+    description: "Average number of times each seat is filled per operating day",
+    helpText: "Casual dining: 2-3 turns. Quick-service: 4-6 turns. Fine dining: 1-1.5 turns.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_restaurant"],
+    min: 0, max: 20, defaultValue: 2.5,
+  },
+  {
+    key: "hospRest_averageSpendPerCover", label: "Average spend per cover",
+    description: "Blended revenue per customer (food + drink)",
+    helpText: "UK casual: £15-25. Mid-range: £25-50. Fine dining: £75-200+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_restaurant"], min: 0,
+  },
+  {
+    key: "hospRest_operatingDaysPerYear", label: "Operating days per year",
+    description: "Actual days open for service per year",
+    helpText: "Typical: 340-360 days (allows for closures, holidays). 7-day operations: closer to 365.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_restaurant"],
+    min: 0, max: 365, defaultValue: 350,
+  },
+
+  // ─── Hospitality Hotel ───────────────────────────────────────────────
+  {
+    key: "hospHotel_roomCount", label: "Room count",
+    description: "Total lettable rooms",
+    helpText: "For hotel driver mode. Bed count differs — use room count for RevPAR-based math.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_hotel"], min: 0,
+  },
+  {
+    key: "hospHotel_occupancyRate", label: "Occupancy rate",
+    description: "Percentage of rooms occupied on average",
+    helpText: "UK regional: 65-75%. London: 75-85%. Boutique: varies widely.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_hotel"],
+    min: 0, max: 100, suffix: "%", defaultValue: 72,
+  },
+  {
+    key: "hospHotel_averageDailyRate", label: "Average daily rate (ADR)",
+    description: "Blended revenue per occupied room per night",
+    helpText: "UK budget: £70-100. Mid-scale: £100-180. Luxury: £250-800+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_hotel"], min: 0,
+  },
+  {
+    key: "hospHotel_foodBeverageRevenuePct", label: "F&B revenue %",
+    description: "Food & beverage revenue as % of room revenue",
+    helpText: "Room-only hotels: 5-15%. Mid-scale with restaurant: 25-40%. Full-service/resort: 40-70%.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_hotel"],
+    min: 0, max: 200, suffix: "%", defaultValue: 30,
+  },
+
+  // ─── Hospitality Catering / Events ───────────────────────────────────
+  {
+    key: "hospCater_eventsPerMonth", label: "Events per month",
+    description: "Average number of catered events per month",
+    helpText: "For catering driver mode. Includes weddings, corporate, private, all sizes.",
+    section: "revenue", step: 2, type: "number", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_catering"], min: 0,
+  },
+  {
+    key: "hospCater_averageEventValue", label: "Average event value",
+    description: "Blended revenue per event",
+    helpText: "Small corporate lunch: £500-2k. Wedding: £5k-25k. Large gala: £25k+.",
+    section: "revenue", step: 2, type: "currency", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_catering"], min: 0,
+  },
+  {
+    key: "hospCater_growthRate", label: "Growth rate (annual)",
+    description: "Expected year-over-year growth in event volume",
+    helpText: "Established caterers: 5-15% typical. Early stage: 30-100%+.",
+    section: "revenue", step: 2, type: "percentage", required: false,
+    applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "lbo", "saas", "ma"],
+    applicableBusinessSubTypes: ["hosp_catering"],
+    min: -50, max: 300, suffix: "%", defaultValue: 15,
   },
 
   // ═══ Existing top-line revenue fields (used when revenueEntryMode = "topLine") ═══
@@ -1211,22 +1268,11 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     label: "Year 1 revenue growth",
     shortLabel: "Y1 Growth",
     description: "Expected year-over-year revenue growth in year 1",
-    helpText: "For SaaS at Series A: 100-200% typical. Mature SMEs: 10-30%. Established businesses: 5-15%.",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "saas"],
     cellName: "in_growthY1", excelFormat: "0.0%",
     min: -50, max: 500, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const stage = ctx.businessStage || ""
-      if (stage.includes("Pre-revenue")) return { value: 300, rationale: "Pre-revenue startups target aggressive growth to prove product-market fit", confidence: "medium" }
-      if (stage.includes("Early Revenue")) return { value: 150, rationale: "Early-revenue SaaS typically grows 100-200% at this stage", confidence: "high" }
-      if (stage.includes("Growth")) return { value: 60, rationale: "Growth-stage businesses often maintain 40-80% growth", confidence: "high" }
-      if (stage.includes("Established")) return { value: 20, rationale: "Established profitable businesses typically grow 10-30%", confidence: "high" }
-      if (stage.includes("Mature")) return { value: 8, rationale: "Mature businesses grow in line with GDP+premium", confidence: "high" }
-      return { value: 20, rationale: "Industry average", confidence: "low" }
-    },
     benchmarkKey: "revenueGrowthY1",
-    audit: { industryTypical: "10-50% for SMEs, 100%+ for early SaaS", source: "OECD SME data 2024" },
   },
   {
     key: "revenueGrowthY2",
@@ -1237,10 +1283,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "saas"],
     cellName: "in_growthY2", excelFormat: "0.0%",
     min: -50, max: 500, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const y1 = Number(ctx.currentValues?.revenueGrowthY1) || 20
-      return { value: Math.max(y1 * 0.75, 10), rationale: "Growth typically decelerates ~25% as revenue base scales", confidence: "medium" }
-    },
   },
   {
     key: "revenueGrowthY3",
@@ -1251,25 +1293,15 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "three_statement", "pre_revenue_dcf", "saas"],
     cellName: "in_growthY3", excelFormat: "0.0%",
     min: -50, max: 200, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const y2 = Number(ctx.currentValues?.revenueGrowthY2) || 15
-      return { value: Math.max(y2 * 0.6, 5), rationale: "Terminal growth trajectory — decelerating toward GDP+premium", confidence: "medium" }
-    },
   },
   {
     key: "churnRate",
     label: "Annual customer churn",
     description: "Annual percentage of customers who leave",
-    helpText: "For SaaS: 5-8% is best-in-class, 8-15% typical, above 15% concerning",
     section: "revenue", step: 2, type: "percentage", required: false,
     applicableModels: ["saas", "pre_revenue_dcf"],
     cellName: "in_churnRate", excelFormat: "0.0%",
     min: 0, max: 100, suffix: "%",
-    getAISuggestion: (ctx) => {
-      if (ctx.subSector?.toLowerCase().includes("enterprise")) return { value: 6, rationale: "Enterprise SaaS: 5-8% typical", confidence: "high" }
-      if (ctx.subSector?.toLowerCase().includes("smb")) return { value: 12, rationale: "SMB SaaS: 10-15% typical", confidence: "high" }
-      return { value: 10, rationale: "SaaS average across segments", confidence: "medium" }
-    },
   },
 
   // ═══ SECTION: COST STRUCTURE ═════════════════════════════════════════
@@ -1277,19 +1309,10 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "grossMargin",
     label: "Gross margin",
     description: "Gross profit as % of revenue",
-    helpText: "SaaS: 70-85%. Marketplaces: 60-80%. Product sales: 30-50%. Services: 40-60%.",
     section: "costs", step: 3, type: "percentage", required: true,
     applicableModels: ["dcf", "three_statement", "lbo", "saas", "ma"],
     cellName: "in_grossMargin", excelFormat: "0.0%",
     min: 0, max: 100, defaultValue: 70, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const model = ctx.currentValues?.revenueModel as string || ""
-      if (model.includes("SaaS")) return { value: 78, rationale: "SaaS gross margin benchmark: 75-85%", confidence: "high", source: "SaaS Capital 2024" }
-      if (model.includes("Product Sales")) return { value: 40, rationale: "Product businesses typically 30-50% GM", confidence: "high" }
-      if (model.includes("Marketplace")) return { value: 65, rationale: "Marketplace commissions typically 60-80% GM", confidence: "high" }
-      if (model.includes("Professional Services")) return { value: 50, rationale: "Services businesses typically 40-60% GM", confidence: "high" }
-      return { value: 70, rationale: "Industry average", confidence: "low" }
-    },
   },
   {
     key: "cogsPercent",
@@ -1313,18 +1336,10 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "marketingBudgetPct",
     label: "Sales & marketing %",
     description: "Sales & marketing spend as % of revenue",
-    helpText: "SaaS growth-stage: 40-60% of revenue. SaaS mature: 15-25%. Product businesses: 5-15%.",
     section: "costs", step: 3, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "lbo", "saas"],
     cellName: "in_marketingPct", excelFormat: "0.0%",
     min: 0, max: 100, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const stage = ctx.businessStage || ""
-      if (stage.includes("Early Revenue")) return { value: 50, rationale: "Early SaaS invests heavily in growth: 40-60% of revenue", confidence: "high" }
-      if (stage.includes("Growth")) return { value: 35, rationale: "Growth stage: 30-40% of revenue", confidence: "high" }
-      if (stage.includes("Established")) return { value: 15, rationale: "Established: 10-20% of revenue", confidence: "high" }
-      return { value: 20, rationale: "Industry median", confidence: "low" }
-    },
   },
   {
     key: "rdBudgetPct",
@@ -1404,7 +1419,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "accountsReceivableDays",
     label: "Debtor days (DSO)",
     description: "Days sales outstanding - how long customers take to pay",
-    helpText: "B2B SaaS: 30-45 days. Consumer/retail: 0-15 days. Government contracts: 60-90 days.",
     section: "workingCapital", step: 4, type: "days", required: false,
     applicableModels: ["dcf", "three_statement", "lbo", "saas"],
     cellName: "in_arDays", excelFormat: "0",
@@ -1472,12 +1486,10 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "interestRate",
     label: "Interest rate on debt",
     description: "Annual interest rate on outstanding debt",
-    helpText: "UK SME loans: 6-10%. LBO senior debt: 5-8%. Mezzanine: 10-15%.",
     section: "debt", step: 4, type: "percentage", required: false,
     applicableModels: ["dcf", "three_statement", "lbo"],
     cellName: "in_interestRate", excelFormat: "0.00%",
     min: 0, max: 30, defaultValue: 8, suffix: "%",
-    audit: { industryTypical: "5-10% for UK SME term loans", source: "Bank of England SME lending data 2024" },
   },
 
   // ═══ SECTION: VALUATION ══════════════════════════════════════════════
@@ -1485,26 +1497,15 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     key: "discountRate",
     label: "Discount rate / WACC",
     description: "Weighted average cost of capital for DCF discounting",
-    helpText: "SME: 12-18%. Established mid-market: 10-15%. Public companies: 7-10%.",
     section: "valuation", step: 5, type: "percentage", required: true,
     applicableModels: ["dcf", "pre_revenue_dcf", "lbo", "ma"],
     cellName: "in_discountRate", excelFormat: "0.00%",
     min: 0, max: 50, defaultValue: 15, suffix: "%",
-    getAISuggestion: (ctx) => {
-      const stage = ctx.businessStage || ""
-      if (stage.includes("Pre-revenue")) return { value: 25, rationale: "Pre-revenue: high risk premium, typically 20-30%", confidence: "medium" }
-      if (stage.includes("Early Revenue")) return { value: 20, rationale: "Early revenue: 18-22%", confidence: "high" }
-      if (stage.includes("Growth")) return { value: 15, rationale: "Growth-stage: 13-17%", confidence: "high" }
-      if (stage.includes("Established")) return { value: 12, rationale: "Established: 10-14%", confidence: "high" }
-      return { value: 15, rationale: "SME average", confidence: "medium" }
-    },
-    audit: { industryTypical: "12-18% for UK SMEs", source: "Damodaran WACC data + UK risk premium" },
   },
   {
     key: "terminalGrowthRate",
     label: "Terminal growth rate",
     description: "Perpetual growth rate after projection period",
-    helpText: "Typically 2-3% (long-term GDP + inflation). Never above 5%.",
     section: "valuation", step: 5, type: "percentage", required: true,
     applicableModels: ["dcf", "pre_revenue_dcf"],
     cellName: "in_terminalGrowth", excelFormat: "0.00%",
@@ -1520,11 +1521,6 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "three_statement", "lbo", "ma"],
     cellName: "in_taxRate", excelFormat: "0.00%",
     min: 0, max: 50, defaultValue: 19, suffix: "%",
-    getAISuggestion: (ctx) => {
-      if (ctx.country === "United Kingdom") return { value: 25, rationale: "UK main rate 25% (marginal relief 19-25% for profits £50k-£250k)", confidence: "high" }
-      if (ctx.country === "United States") return { value: 21, rationale: "US federal 21% (state adds 0-13%)", confidence: "high" }
-      return { value: 20, rationale: "Global average", confidence: "low" }
-    },
   },
 
   // ═══ SECTION: EXIT ═══════════════════════════════════════════════════
@@ -1544,45 +1540,31 @@ export const ASSUMPTIONS: AssumptionDefinition[] = [
     applicableModels: ["dcf", "lbo"],
     cellName: "in_exitMultiple", excelFormat: "0.0\"x\"",
     min: 0, max: 50, defaultValue: 8, suffix: "x",
-    getAISuggestion: (ctx) => {
-      const model = ctx.currentValues?.revenueModel as string || ""
-      if (model.includes("SaaS")) return { value: 8, rationale: "SaaS: 6-10x revenue at growth, 4-6x at maturity", confidence: "high", source: "SaaS Capital Index 2024" }
-      if (model.includes("Marketplace")) return { value: 5, rationale: "Marketplaces: 4-6x revenue", confidence: "high" }
-      if (model.includes("Product Sales")) return { value: 2, rationale: "Product businesses: 1.5-3x revenue", confidence: "high" }
-      return { value: 4, rationale: "General mid-market multiple", confidence: "medium" }
-    },
-    audit: { industryTypical: "6-10x for SaaS, 1.5-3x for traditional SMEs" },
   },
 ]
 
 // -- HELPER FUNCTIONS ----------------------------------------------------
 
-/** Get all assumptions applicable to a specific model type */
 export function getAssumptionsForModel(modelType: ModelType): AssumptionDefinition[] {
   return ASSUMPTIONS.filter((a) => a.applicableModels.includes(modelType))
 }
 
-/** Get assumptions for a specific section */
 export function getAssumptionsBySection(section: AssumptionSection): AssumptionDefinition[] {
   return ASSUMPTIONS.filter((a) => a.section === section)
 }
 
-/** Get assumptions for a specific questionnaire step */
 export function getAssumptionsByStep(step: number): AssumptionDefinition[] {
   return ASSUMPTIONS.filter((a) => a.step === step)
 }
 
-/** Look up a single assumption by key */
 export function getAssumption(key: string): AssumptionDefinition | undefined {
   return ASSUMPTIONS.find((a) => a.key === key)
 }
 
-/** Get all assumptions that should appear in the Excel Model Inputs sheet */
 export function getExportableAssumptions(): AssumptionDefinition[] {
   return ASSUMPTIONS.filter((a) => a.cellName !== undefined)
 }
 
-/** Get an AI-suggested value for an assumption */
 export function getAISuggestion(
   key: string,
   ctx: AISuggestionContext
@@ -1592,7 +1574,6 @@ export function getAISuggestion(
   return assumption.getAISuggestion(ctx)
 }
 
-/** Group assumptions by section for display */
 export function groupBySection(assumptions: AssumptionDefinition[]): Record<AssumptionSection, AssumptionDefinition[]> {
   const grouped = {} as Record<AssumptionSection, AssumptionDefinition[]>
   assumptions.forEach((a) => {
@@ -1602,12 +1583,10 @@ export function groupBySection(assumptions: AssumptionDefinition[]): Record<Assu
   return grouped
 }
 
-/** Session 2a: Get driver fields applicable to a specific business sub-type */
 export function getDriverFieldsForSubType(subType: BusinessTypeSub): AssumptionDefinition[] {
   return ASSUMPTIONS.filter((a) => a.applicableBusinessSubTypes?.includes(subType))
 }
 
-/** Human-readable section titles for display */
 export const SECTION_TITLES: Record<AssumptionSection, string> = {
   business: "Business Information",
   revenue: "Revenue Assumptions",

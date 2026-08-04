@@ -175,6 +175,53 @@ export const step2Schema = z
     eduCorp_averageContractValue: z.string().optional(),
     eduCorp_retentionRate: z.string().optional(),
     eduCorp_expansionPct: z.string().optional(),
+
+    // Session 3c — SaaS B2C drivers
+    saasB2c_monthlySignups: z.string().optional(),
+    saasB2c_paidConversionRate: z.string().optional(),
+    saasB2c_arpu: z.string().optional(),
+    saasB2c_monthlyChurnRate: z.string().optional(),
+    saasB2c_viralCoefficient: z.string().optional(),
+
+    // Session 3c — SaaS Usage-based drivers
+    saasUsage_activeAccounts: z.string().optional(),
+    saasUsage_avgUnitsPerAccountPerMonth: z.string().optional(),
+    saasUsage_pricePerUnit: z.string().optional(),
+    saasUsage_monthlyAccountChurnRate: z.string().optional(),
+
+    // Session 3c — E-commerce Marketplace drivers
+    ecomMkt_monthlyGmv: z.string().optional(),
+    ecomMkt_takeRate: z.string().optional(),
+    ecomMkt_activeSellers: z.string().optional(),
+    ecomMkt_transactionsPerSellerPerMonth: z.string().optional(),
+
+    // Session 3c — Services Agency drivers
+    svcAgcy_retainedClients: z.string().optional(),
+    svcAgcy_arpaPerMonth: z.string().optional(),
+    svcAgcy_newProjectsPerMonth: z.string().optional(),
+    svcAgcy_averageProjectValue: z.string().optional(),
+
+    // Session 3c — Services Freelance drivers
+    svcFree_chargeableHoursPerWeek: z.string().optional(),
+    svcFree_weeklyRate: z.string().optional(),
+    svcFree_weeksWorkedPerYear: z.string().optional(),
+
+    // Session 3c — Hospitality Restaurant drivers
+    hospRest_seatCount: z.string().optional(),
+    hospRest_tableTurnsPerDay: z.string().optional(),
+    hospRest_averageSpendPerCover: z.string().optional(),
+    hospRest_operatingDaysPerYear: z.string().optional(),
+
+    // Session 3c — Hospitality Hotel drivers
+    hospHotel_roomCount: z.string().optional(),
+    hospHotel_occupancyRate: z.string().optional(),
+    hospHotel_averageDailyRate: z.string().optional(),
+    hospHotel_foodBeverageRevenuePct: z.string().optional(),
+
+    // Session 3c — Hospitality Catering drivers
+    hospCater_eventsPerMonth: z.string().optional(),
+    hospCater_averageEventValue: z.string().optional(),
+    hospCater_growthRate: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     // Default to "topLine" when revenueEntryMode is not yet set
