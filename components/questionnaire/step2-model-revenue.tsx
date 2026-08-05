@@ -583,7 +583,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "health_clinic" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Clinical practice drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="healthClinic_patientVisitsPerMonth" render={({ field }) => (<FormItem><FormLabel>Patient visits per month</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 800" className={plain} {...field} /></FormControl><FormDescription>UK GP: 150-200/provider/mo. Specialist: 60-100</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="healthClinic_averageFeePerVisit" render={({ field }) => (<FormItem><FormLabel>Average fee per visit ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 120" className={plain} {...field} /></FormControl><FormDescription>UK private GP: £80-150. Specialist: £150-300</FormDescription><FormMessage /></FormItem>)} />
@@ -597,7 +597,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "health_hospital" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Hospital drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="healthHosp_bedCount" render={({ field }) => (<FormItem><FormLabel>Bed count</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 60" className={plain} {...field} /></FormControl><FormDescription>UK private small: 30-80 beds. Large: 150+</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="healthHosp_occupancyRate" render={({ field }) => (<FormItem><FormLabel>Occupancy rate (%)</FormLabel><FormControl><input type="number" min="0" max="100" placeholder="e.g. 70" className={plain} {...field} /></FormControl><FormDescription>UK private: 60-80%. NHS: 85-95%</FormDescription><FormMessage /></FormItem>)} />
@@ -611,7 +611,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "health_device" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Medical device / diagnostics drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="healthDev_unitsSoldPerQuarter" render={({ field }) => (<FormItem><FormLabel>Units sold per quarter</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 15" className={plain} {...field} /></FormControl><FormDescription>Steady-state sales cadence</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="healthDev_unitPrice" render={({ field }) => (<FormItem><FormLabel>Unit selling price ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 25000" className={plain} {...field} /></FormControl><FormDescription>Average price per device</FormDescription><FormMessage /></FormItem>)} />
@@ -625,7 +625,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "health_saas" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Health SaaS / telemedicine drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="healthSaas_startingCustomers" render={({ field }) => (<FormItem><FormLabel>Starting customer count</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 8" className={plain} {...field} /></FormControl><FormDescription>Clinics / hospitals / patients at month 0</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="healthSaas_newCustomersPerMonth" render={({ field }) => (<FormItem><FormLabel>New customers per month</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 3" className={plain} {...field} /></FormControl><FormDescription>Sales pipeline output</FormDescription><FormMessage /></FormItem>)} />
@@ -639,7 +639,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "health_pharmacy" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Pharmacy drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="healthPharm_dailyFootfall" render={({ field }) => (<FormItem><FormLabel>Daily footfall</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 350" className={plain} {...field} /></FormControl><FormDescription>UK community: 200-500/day typical</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="healthPharm_conversionRate" render={({ field }) => (<FormItem><FormLabel>Conversion rate (%)</FormLabel><FormControl><input type="number" min="0" max="100" placeholder="e.g. 70" className={plain} {...field} /></FormControl><FormDescription>Pharmacy: 60-80% typical</FormDescription><FormMessage /></FormItem>)} />
@@ -653,7 +653,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "edu_institution" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Education institution drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="eduInst_enrolledStudents" render={({ field }) => (<FormItem><FormLabel>Enrolled students</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 450" className={plain} {...field} /></FormControl><FormDescription>Full-time equivalent</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="eduInst_tuitionPerStudent" render={({ field }) => (<FormItem><FormLabel>Tuition per student per year ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 22000" className={plain} {...field} /></FormControl><FormDescription>UK private secondary: £15k-£45k/yr</FormDescription><FormMessage /></FormItem>)} />
@@ -667,7 +667,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "edu_edtech" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">EdTech SaaS drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="eduTech_monthlySignups" render={({ field }) => (<FormItem><FormLabel>Monthly signups</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 5000" className={plain} {...field} /></FormControl><FormDescription>Free or paid signups per month</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="eduTech_paidConversionRate" render={({ field }) => (<FormItem><FormLabel>Free-to-paid conversion (%)</FormLabel><FormControl><input type="number" min="0" max="100" step="0.1" placeholder="e.g. 3" className={plain} {...field} /></FormControl><FormDescription>Freemium EdTech: 2-5% typical</FormDescription><FormMessage /></FormItem>)} />
@@ -681,7 +681,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "edu_tutoring" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Tutoring / test prep drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="eduTut_activeStudents" render={({ field }) => (<FormItem><FormLabel>Active students</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 120" className={plain} {...field} /></FormControl><FormDescription>Students who booked in last 30 days</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="eduTut_sessionsPerStudentPerMonth" render={({ field }) => (<FormItem><FormLabel>Sessions per student per month</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 4" className={plain} {...field} /></FormControl><FormDescription>1:1 tutoring: 2-4/mo. Test prep intensive: 8+</FormDescription><FormMessage /></FormItem>)} />
@@ -694,7 +694,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "edu_corptraining" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Corporate training drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="eduCorp_enterpriseContracts" render={({ field }) => (<FormItem><FormLabel>Enterprise contracts</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 25" className={plain} {...field} /></FormControl><FormDescription>Active B2B customer contracts</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="eduCorp_averageContractValue" render={({ field }) => (<FormItem><FormLabel>Average contract value / year ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 45000" className={plain} {...field} /></FormControl><FormDescription>SME: £5k-£25k. Mid-market: £25k-£150k. Enterprise: £150k+</FormDescription><FormMessage /></FormItem>)} />

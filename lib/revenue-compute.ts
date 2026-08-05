@@ -13,11 +13,12 @@
  * - Output is ComputedRevenue { year1, year2, year3 } as numbers
  * - Empty/invalid inputs default to 0 (via n() helper) or field-specific defaults
  * - Sub-types WITHOUT an explicit growth driver use DEFAULT_GROWTH_Y2/Y3
- * - Sub-types WITH an explicit growth driver (retail same-store, REIT NAV, SaaS B2B monthly)
- *   use their own logic
+ * - Sub-types WITH an explicit growth driver (retail same-store, REIT NAV, SaaS B2B monthly,
+ *   edu_corptraining retention + expansion) use their own logic
  *
- * Sessions 2c-a covers 11 sub-types (matching Sessions 2a + 3a UI coverage).
- * Sessions 2c-b + 2c-c will add the remaining 16.
+ * Session 2c-a covers 11 sub-types (Sessions 2a + 3a UI coverage).
+ * Session 2c-b adds 9 sub-types (Session 3b UI coverage: Healthcare + Education).
+ * Session 2c-c will add the remaining 8 (Session 3c UI coverage).
  */
 
 import type { Step2Data } from "./schemas"
@@ -58,25 +59,39 @@ function applyDefaultGrowth(y1: number): ComputedRevenue {
   return { year1: y1, year2: y2, year3: y3 }
 }
 
-// -- SUB-TYPE COMPUTE FUNCTIONS -----------------------------------------
+/**
+ * 36-month customer simulation with churn.
+ * customers(m) = customers(m-1) × (1 − monthlyChurn) + newCustomersPerMonth
+ * Returns array of 36 monthly customer counts.
+ */
+function simulateCustomers(
+  startingCustomers: number,
+  newPerMonth: number,
+  monthlyChurnPct: number
+): number[] {
+  const monthlyChurn = monthlyChurnPct / 100
+  let customers = startingCustomers
+  const result: number[] = []
+  for (let month = 1; month <= 36; month++) {
+    customers = customers * (1 - monthlyChurn) + newPerMonth
+    if (customers < 0) customers = 0
+    result.push(customers)
+  }
+  return result
+}
+
+// -- SUB-TYPE COMPUTE FUNCTIONS: Session 2c-a (11 sub-types) ------------
 
 // ─── SaaS B2B: 36-month customer projection with churn + expansion ────
-// customers(m) = customers(m-1) × (1 − monthlyChurn) + newCustomersPerMonth
-// yearN revenue = sum of monthly MRR × (1 + expansion%)
 function computeSaasB2b(data: Partial<Step2Data>): ComputedRevenue {
   const c0 = n(data.saasB2b_startingCustomers)
   const newPerMo = n(data.saasB2b_newCustomersPerMonth)
-  const monthlyChurn = n(data.saasB2b_monthlyChurnRate) / 100
+  const monthlyChurnPct = n(data.saasB2b_monthlyChurnRate)
   const arpu = n(data.saasB2b_arpu)
   const expansion = n(data.saasB2b_expansionRevenuePct, 15) / 100
 
-  let customers = c0
-  const monthlyMrr: number[] = []
-  for (let month = 1; month <= 36; month++) {
-    customers = customers * (1 - monthlyChurn) + newPerMo
-    if (customers < 0) customers = 0
-    monthlyMrr.push(customers * arpu)
-  }
+  const monthlyCustomers = simulateCustomers(c0, newPerMo, monthlyChurnPct)
+  const monthlyMrr = monthlyCustomers.map((c) => c * arpu)
 
   const sumRange = (start: number, end: number) =>
     monthlyMrr.slice(start, end).reduce((s, m) => s + m, 0) * (1 + expansion)
@@ -89,7 +104,6 @@ function computeSaasB2b(data: Partial<Step2Data>): ComputedRevenue {
 }
 
 // ─── E-commerce D2C: traffic × conversion × AOV × 12 × (1 + repeat × 0.5) ─
-// The 0.5 factor discounts the 12-month repeat rate to an average uplift per order.
 function computeEcomD2c(data: Partial<Step2Data>): ComputedRevenue {
   const traffic = n(data.ecomD2c_monthlyTraffic)
   const conversion = n(data.ecomD2c_conversionRate) / 100
@@ -112,7 +126,6 @@ function computeSvcProf(data: Partial<Step2Data>): ComputedRevenue {
 }
 
 // ─── Product Manufacturing ───────────────────────────────────────────
-// units × capacity × price × sell-through × 12
 function computeProductMfg(data: Partial<Step2Data>): ComputedRevenue {
   const units = n(data.productMfg_unitsPerMonth)
   const capacity = n(data.productMfg_capacityUtilization, 75) / 100
@@ -146,8 +159,6 @@ function computeProductWhsl(data: Partial<Step2Data>): ComputedRevenue {
 }
 
 // ─── Real Estate Development ─────────────────────────────────────────
-// grossMargin only affects profitability, not revenue.
-// sellThroughMonths affects timing but at annual granularity we assume steady-state.
 function computeReDev(data: Partial<Step2Data>): ComputedRevenue {
   const units = n(data.reDev_unitsBuiltYear)
   const asp = n(data.reDev_averageSellingPrice)
@@ -157,7 +168,6 @@ function computeReDev(data: Partial<Step2Data>): ComputedRevenue {
 }
 
 // ─── Real Estate Rental ──────────────────────────────────────────────
-// units × rent × 12 × occupancy × (1 + otherIncome%)
 function computeReRent(data: Partial<Step2Data>): ComputedRevenue {
   const units = n(data.reRent_rentableUnits)
   const rent = n(data.reRent_monthlyRent)
@@ -191,7 +201,6 @@ function computeReReit(data: Partial<Step2Data>): ComputedRevenue {
 }
 
 // ─── Real Estate Short-term Rental ───────────────────────────────────
-// units × 365 × occupancy × (nightlyRate + cleaning-per-night)
 function computeReStr(data: Partial<Step2Data>): ComputedRevenue {
   const units = n(data.reStr_rentableUnits)
   const rate = n(data.reStr_averageNightlyRate)
@@ -203,13 +212,143 @@ function computeReStr(data: Partial<Step2Data>): ComputedRevenue {
   return applyDefaultGrowth(y1)
 }
 
+// -- SUB-TYPE COMPUTE FUNCTIONS: Session 2c-b (9 sub-types) -------------
+
+// ─── Healthcare Clinic: patient visits × avg fee × 12 ────────────────
+// Retention is an informational field for this iteration — clinics also acquire
+// new patients, so shrinking Y2/Y3 by retention alone would be misleading.
+function computeHealthClinic(data: Partial<Step2Data>): ComputedRevenue {
+  const visits = n(data.healthClinic_patientVisitsPerMonth)
+  const fee = n(data.healthClinic_averageFeePerVisit)
+
+  const y1 = visits * fee * 12
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Healthcare Hospital: bed-days × ADR × (1 + ancillary %) ─────────
+function computeHealthHosp(data: Partial<Step2Data>): ComputedRevenue {
+  const beds = n(data.healthHosp_bedCount)
+  const occ = n(data.healthHosp_occupancyRate, 70) / 100
+  const adr = n(data.healthHosp_averageDailyRate)
+  const ancillary = n(data.healthHosp_ancillaryRevenuePct, 40) / 100
+
+  const y1 = beds * 365 * occ * adr * (1 + ancillary)
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Healthcare Device: unit sales + recurring service revenue ───────
+// New sales: unitsPerQuarter × 4 × unitPrice
+// Recurring: installBase × unitPrice × serviceRevenuePct (annual service run-rate)
+function computeHealthDev(data: Partial<Step2Data>): ComputedRevenue {
+  const unitsPerQ = n(data.healthDev_unitsSoldPerQuarter)
+  const unitPrice = n(data.healthDev_unitPrice)
+  const serviceRev = n(data.healthDev_serviceRevenuePct, 30) / 100
+  const installBase = n(data.healthDev_installBase)
+
+  const newSalesRevenue = unitsPerQ * 4 * unitPrice
+  const recurringRevenue = installBase * unitPrice * serviceRev
+  const y1 = newSalesRevenue + recurringRevenue
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Healthcare SaaS: 36-month customer simulation (no expansion field) ─
+function computeHealthSaas(data: Partial<Step2Data>): ComputedRevenue {
+  const c0 = n(data.healthSaas_startingCustomers)
+  const newPerMo = n(data.healthSaas_newCustomersPerMonth)
+  const monthlyChurnPct = n(data.healthSaas_monthlyChurnRate, 1.5)
+  const arpu = n(data.healthSaas_arpu)
+
+  const monthlyCustomers = simulateCustomers(c0, newPerMo, monthlyChurnPct)
+  const monthlyMrr = monthlyCustomers.map((c) => c * arpu)
+
+  const sumRange = (start: number, end: number) =>
+    monthlyMrr.slice(start, end).reduce((s, m) => s + m, 0)
+
+  return {
+    year1: sumRange(0, 12),
+    year2: sumRange(12, 24),
+    year3: sumRange(24, 36),
+  }
+}
+
+// ─── Healthcare Pharmacy: footfall × conversion × basket × 365 ───────
+// Prescription% is an informational mix indicator, not a multiplier.
+function computeHealthPharm(data: Partial<Step2Data>): ComputedRevenue {
+  const footfall = n(data.healthPharm_dailyFootfall)
+  const conversion = n(data.healthPharm_conversionRate, 70) / 100
+  const basket = n(data.healthPharm_basketSize)
+
+  const y1 = footfall * conversion * basket * 365
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Education Institution: enrolled × tuition ───────────────────────
+// Retention is informational — new intakes offset leavers at steady-state.
+function computeEduInst(data: Partial<Step2Data>): ComputedRevenue {
+  const students = n(data.eduInst_enrolledStudents)
+  const tuition = n(data.eduInst_tuitionPerStudent)
+
+  const y1 = students * tuition
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Education EdTech: 36-month paying-customer simulation ────────────
+// New paying customers per month = signups × (paidConversion / 100)
+// Then standard churn dynamics
+function computeEduTech(data: Partial<Step2Data>): ComputedRevenue {
+  const signups = n(data.eduTech_monthlySignups)
+  const paidConv = n(data.eduTech_paidConversionRate, 3) / 100
+  const arpu = n(data.eduTech_arpu)
+  const monthlyChurnPct = n(data.eduTech_monthlyChurnRate, 8)
+
+  const newPayingPerMo = signups * paidConv
+  const monthlyCustomers = simulateCustomers(0, newPayingPerMo, monthlyChurnPct)
+  const monthlyMrr = monthlyCustomers.map((c) => c * arpu)
+
+  const sumRange = (start: number, end: number) =>
+    monthlyMrr.slice(start, end).reduce((s, m) => s + m, 0)
+
+  return {
+    year1: sumRange(0, 12),
+    year2: sumRange(12, 24),
+    year3: sumRange(24, 36),
+  }
+}
+
+// ─── Education Tutoring: students × sessions × price × 12 ────────────
+function computeEduTut(data: Partial<Step2Data>): ComputedRevenue {
+  const students = n(data.eduTut_activeStudents)
+  const sessions = n(data.eduTut_sessionsPerStudentPerMonth, 4)
+  const price = n(data.eduTut_pricePerSession)
+
+  const y1 = students * sessions * price * 12
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Education Corporate Training: retention + expansion drive growth ─
+// Y1 = contracts × ACV × (1 + expansion%)
+// Y2 = Y1 × (retention/100 + expansion/100)
+// Y3 = Y2 × (retention/100 + expansion/100)
+function computeEduCorp(data: Partial<Step2Data>): ComputedRevenue {
+  const contracts = n(data.eduCorp_enterpriseContracts)
+  const acv = n(data.eduCorp_averageContractValue)
+  const retention = n(data.eduCorp_retentionRate, 80) / 100
+  const expansion = n(data.eduCorp_expansionPct, 10) / 100
+
+  const y1 = contracts * acv * (1 + expansion)
+  const yoyFactor = retention + expansion
+  const y2 = y1 * yoyFactor
+  const y3 = y2 * yoyFactor
+  return { year1: y1, year2: y2, year3: y3 }
+}
+
 // -- DISPATCHER ---------------------------------------------------------
 
 /**
  * Main entry point. Returns computed year1/2/3 revenue for the given sub-type,
  * or null if:
  *   - subType is undefined
- *   - the sub-type is not yet implemented (Sessions 2c-b and 2c-c will fill these)
+ *   - the sub-type is not yet implemented (Session 2c-c will fill remaining 8)
  *
  * Callers should treat null as "compute not available yet — fall back to top-line".
  */
@@ -233,9 +372,17 @@ export function computeRevenue(
     case "realestate_reit":             return computeReReit(data)
     case "realestate_shorttermrental":  return computeReStr(data)
 
-    // Session 2c-b will add: health_clinic, health_hospital, health_device,
-    // health_saas, health_pharmacy, edu_institution, edu_edtech, edu_tutoring,
-    // edu_corptraining
+    // Session 2c-b: Session 3b coverage (9 sub-types)
+    case "health_clinic":               return computeHealthClinic(data)
+    case "health_hospital":             return computeHealthHosp(data)
+    case "health_device":               return computeHealthDev(data)
+    case "health_saas":                 return computeHealthSaas(data)
+    case "health_pharmacy":             return computeHealthPharm(data)
+    case "edu_institution":             return computeEduInst(data)
+    case "edu_edtech":                  return computeEduTech(data)
+    case "edu_tutoring":                return computeEduTut(data)
+    case "edu_corptraining":            return computeEduCorp(data)
+
     // Session 2c-c will add: saas_b2c, saas_usage, ecom_marketplace,
     // services_agency, services_freelance, hosp_restaurant, hosp_hotel,
     // hosp_catering
