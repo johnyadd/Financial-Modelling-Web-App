@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuestionnaireStore } from "@/store/questionnaire-store"
 import { step2Schema, type Step2Data } from "@/lib/schemas"
-import { BUSINESS_TYPE_HIERARCHY, type BusinessTypeMain } from "@/lib/schemas/assumptions"
+import { BUSINESS_TYPE_HIERARCHY, type BusinessTypeMain, type BusinessTypeSub } from "@/lib/schemas/assumptions"
+import { computeRevenue, deriveGrowthRate } from "@/lib/revenue-compute"
 import { MODEL_TYPES, REVENUE_MODELS, PROJECTION_YEARS, GROWTH_DRIVERS } from "@/lib/questionnaire-data"
 import { BUSINESS_GOALS } from "@/lib/goals"
 import { useBenchmarks } from "@/hooks/use-benchmarks"
@@ -25,18 +26,12 @@ import { ArrowLeftIcon, ArrowRightIcon, TrendingUpIcon, SparklesIcon } from "luc
 
 // Sub-types that have driver UI blocks built — all 27 sub-types as of Session 3c
 const BUILT_SUB_TYPES = [
-  // Session 2a
   "saas_b2b", "ecom_d2c", "services_professional",
-  // Session 3a — Product
   "product_manufacturing", "product_retail", "product_wholesale",
-  // Session 3a — Real Estate
   "realestate_development", "realestate_rental", "realestate_agency",
   "realestate_reit", "realestate_shorttermrental",
-  // Session 3b — Healthcare
   "health_clinic", "health_hospital", "health_device", "health_saas", "health_pharmacy",
-  // Session 3b — Education
   "edu_institution", "edu_edtech", "edu_tutoring", "edu_corptraining",
-  // Session 3c — SaaS remaining, E-com, Services remaining, Hospitality
   "saas_b2c", "saas_usage",
   "ecom_marketplace",
   "services_agency", "services_freelance",
@@ -173,49 +168,49 @@ export function Step2ModelRevenue() {
       eduCorp_retentionRate:        data.step2.eduCorp_retentionRate ?? "",
       eduCorp_expansionPct:         data.step2.eduCorp_expansionPct ?? "",
 
-      // Session 3c — SaaS B2C drivers
+      // Session 3c — SaaS B2C
       saasB2c_monthlySignups:     data.step2.saasB2c_monthlySignups ?? "",
       saasB2c_paidConversionRate: data.step2.saasB2c_paidConversionRate ?? "",
       saasB2c_arpu:               data.step2.saasB2c_arpu ?? "",
       saasB2c_monthlyChurnRate:   data.step2.saasB2c_monthlyChurnRate ?? "",
       saasB2c_viralCoefficient:   data.step2.saasB2c_viralCoefficient ?? "",
 
-      // Session 3c — SaaS Usage-based drivers
+      // Session 3c — SaaS Usage
       saasUsage_activeAccounts:             data.step2.saasUsage_activeAccounts ?? "",
       saasUsage_avgUnitsPerAccountPerMonth: data.step2.saasUsage_avgUnitsPerAccountPerMonth ?? "",
       saasUsage_pricePerUnit:               data.step2.saasUsage_pricePerUnit ?? "",
       saasUsage_monthlyAccountChurnRate:    data.step2.saasUsage_monthlyAccountChurnRate ?? "",
 
-      // Session 3c — E-commerce Marketplace drivers
+      // Session 3c — E-commerce Marketplace
       ecomMkt_monthlyGmv:                    data.step2.ecomMkt_monthlyGmv ?? "",
       ecomMkt_takeRate:                      data.step2.ecomMkt_takeRate ?? "",
       ecomMkt_activeSellers:                 data.step2.ecomMkt_activeSellers ?? "",
       ecomMkt_transactionsPerSellerPerMonth: data.step2.ecomMkt_transactionsPerSellerPerMonth ?? "",
 
-      // Session 3c — Services Agency drivers
+      // Session 3c — Services Agency
       svcAgcy_retainedClients:     data.step2.svcAgcy_retainedClients ?? "",
       svcAgcy_arpaPerMonth:        data.step2.svcAgcy_arpaPerMonth ?? "",
       svcAgcy_newProjectsPerMonth: data.step2.svcAgcy_newProjectsPerMonth ?? "",
       svcAgcy_averageProjectValue: data.step2.svcAgcy_averageProjectValue ?? "",
 
-      // Session 3c — Services Freelance drivers
+      // Session 3c — Services Freelance
       svcFree_chargeableHoursPerWeek: data.step2.svcFree_chargeableHoursPerWeek ?? "",
       svcFree_weeklyRate:             data.step2.svcFree_weeklyRate ?? "",
       svcFree_weeksWorkedPerYear:     data.step2.svcFree_weeksWorkedPerYear ?? "",
 
-      // Session 3c — Hospitality Restaurant drivers
+      // Session 3c — Hospitality Restaurant
       hospRest_seatCount:            data.step2.hospRest_seatCount ?? "",
       hospRest_tableTurnsPerDay:     data.step2.hospRest_tableTurnsPerDay ?? "",
       hospRest_averageSpendPerCover: data.step2.hospRest_averageSpendPerCover ?? "",
       hospRest_operatingDaysPerYear: data.step2.hospRest_operatingDaysPerYear ?? "",
 
-      // Session 3c — Hospitality Hotel drivers
+      // Session 3c — Hospitality Hotel
       hospHotel_roomCount:              data.step2.hospHotel_roomCount ?? "",
       hospHotel_occupancyRate:          data.step2.hospHotel_occupancyRate ?? "",
       hospHotel_averageDailyRate:       data.step2.hospHotel_averageDailyRate ?? "",
       hospHotel_foodBeverageRevenuePct: data.step2.hospHotel_foodBeverageRevenuePct ?? "",
 
-      // Session 3c — Hospitality Catering drivers
+      // Session 3c — Hospitality Catering
       hospCater_eventsPerMonth:    data.step2.hospCater_eventsPerMonth ?? "",
       hospCater_averageEventValue: data.step2.hospCater_averageEventValue ?? "",
       hospCater_growthRate:        data.step2.hospCater_growthRate ?? "",
@@ -244,8 +239,27 @@ export function Step2ModelRevenue() {
     }
   }, [watchedTypeMain, watchedTypeSub, form])
 
+  // Session 2c: when in driver mode, compute revenue from drivers before submit.
+  // This populates year1/2/3Revenue + growth rates so downstream steps
+  // (costs, WC, valuation) work with the computed values.
   function onSubmit(values: Step2Data) {
-    updateStep2(values)
+    const finalValues: Step2Data = { ...values }
+
+    if (values.revenueEntryMode === "driverBased" && values.businessTypeSub) {
+      const computed = computeRevenue(
+        values.businessTypeSub as BusinessTypeSub,
+        values
+      )
+      if (computed) {
+        finalValues.year1Revenue = String(Math.round(computed.year1))
+        finalValues.year2Revenue = String(Math.round(computed.year2))
+        finalValues.year3Revenue = String(Math.round(computed.year3))
+        finalValues.revenueGrowthY2 = deriveGrowthRate(computed.year1, computed.year2)
+        finalValues.revenueGrowthY3 = deriveGrowthRate(computed.year2, computed.year3)
+      }
+    }
+
+    updateStep2(finalValues)
     nextStep()
   }
 
@@ -418,7 +432,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "saas_b2b" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">SaaS B2B drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="saasB2b_startingCustomers" render={({ field }) => (<FormItem><FormLabel>Starting customer count</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 20" className={plain} {...field} /></FormControl><FormDescription>Paying customers at month 0</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="saasB2b_newCustomersPerMonth" render={({ field }) => (<FormItem><FormLabel>New customers per month</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 5" className={plain} {...field} /></FormControl><FormDescription>Sales pipeline output per month</FormDescription><FormMessage /></FormItem>)} />
@@ -433,7 +447,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "ecom_d2c" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">E-commerce D2C drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="ecomD2c_monthlyTraffic" render={({ field }) => (<FormItem><FormLabel>Monthly website traffic</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 25000" className={plain} {...field} /></FormControl><FormDescription>Unique sessions/month across all channels</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="ecomD2c_conversionRate" render={({ field }) => (<FormItem><FormLabel>Conversion rate (%)</FormLabel><FormControl><input type="number" min="0" max="100" step="0.1" placeholder="e.g. 2.5" className={plain} {...field} /></FormControl><FormDescription>D2C average: 2-3%. Best-in-class: 4-5%</FormDescription><FormMessage /></FormItem>)} />
@@ -447,7 +461,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "services_professional" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Professional services drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="svcProf_billableStaffCount" render={({ field }) => (<FormItem><FormLabel>Billable staff count</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 8" className={plain} {...field} /></FormControl><FormDescription>Consultants who bill clients (exclude ops/admin)</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="svcProf_billableHoursPerMonth" render={({ field }) => (<FormItem><FormLabel>Billable hours per staff/month</FormLabel><FormControl><input type="number" min="0" max="250" placeholder="e.g. 160" className={plain} {...field} /></FormControl><FormDescription>Capacity before utilization. Consulting: 160-180</FormDescription><FormMessage /></FormItem>)} />
@@ -461,7 +475,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "product_manufacturing" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Manufacturing drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="productMfg_unitsPerMonth" render={({ field }) => (<FormItem><FormLabel>Units produced per month</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 5000" className={plain} {...field} /></FormControl><FormDescription>Units at full production</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="productMfg_unitPrice" render={({ field }) => (<FormItem><FormLabel>Unit selling price ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 45" className={plain} {...field} /></FormControl><FormDescription>Average selling price before discounts</FormDescription><FormMessage /></FormItem>)} />
@@ -475,7 +489,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "product_retail" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Retail (own store) drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="productRetail_storeCount" render={({ field }) => (<FormItem><FormLabel>Store count</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 4" className={plain} {...field} /></FormControl><FormDescription>Physical locations you operate</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="productRetail_revenuePerStore" render={({ field }) => (<FormItem><FormLabel>Revenue per store per month ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 40000" className={plain} {...field} /></FormControl><FormDescription>UK high street SME: £15k-£80k/mo</FormDescription><FormMessage /></FormItem>)} />
@@ -488,7 +502,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "product_wholesale" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Wholesale / distribution drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="productWhsl_activeAccounts" render={({ field }) => (<FormItem><FormLabel>Active accounts</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 80" className={plain} {...field} /></FormControl><FormDescription>Accounts that ordered in last 90 days</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="productWhsl_ordersPerAccount" render={({ field }) => (<FormItem><FormLabel>Orders per account per month</FormLabel><FormControl><input type="number" min="0" step="0.1" placeholder="e.g. 1.5" className={plain} {...field} /></FormControl><FormDescription>Average order frequency per account</FormDescription><FormMessage /></FormItem>)} />
@@ -501,7 +515,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "realestate_development" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Property development drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="reDev_unitsBuiltYear" render={({ field }) => (<FormItem><FormLabel>Units built per year</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 12" className={plain} {...field} /></FormControl><FormDescription>Full completions only</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="reDev_averageSellingPrice" render={({ field }) => (<FormItem><FormLabel>Avg selling price per unit ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 450000" className={plain} {...field} /></FormControl><FormDescription>Average sale price achieved</FormDescription><FormMessage /></FormItem>)} />
@@ -515,7 +529,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "realestate_rental" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Commercial rental / landlord drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="reRent_rentableUnits" render={({ field }) => (<FormItem><FormLabel>Rentable units</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 24" className={plain} {...field} /></FormControl><FormDescription>Total lettable units (not sq ft)</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="reRent_monthlyRent" render={({ field }) => (<FormItem><FormLabel>Monthly rent per unit ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 1800" className={plain} {...field} /></FormControl><FormDescription>Average monthly rent achieved</FormDescription><FormMessage /></FormItem>)} />
@@ -529,7 +543,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "realestate_agency" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Real estate agency (broker) drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="reAgcy_monthlyTransactions" render={({ field }) => (<FormItem><FormLabel>Monthly transactions</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 8" className={plain} {...field} /></FormControl><FormDescription>Completed sales + lets per month</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="reAgcy_averageTransactionValue" render={({ field }) => (<FormItem><FormLabel>Avg transaction value ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 350000" className={plain} {...field} /></FormControl><FormDescription>Average sale/let value per transaction</FormDescription><FormMessage /></FormItem>)} />
@@ -542,7 +556,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "realestate_reit" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">REIT / property fund drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="reReit_portfolioProperties" render={({ field }) => (<FormItem><FormLabel>Portfolio properties</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 15" className={plain} {...field} /></FormControl><FormDescription>Number of properties held</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="reReit_averageYield" render={({ field }) => (<FormItem><FormLabel>Average property yield (%)</FormLabel><FormControl><input type="number" min="0" max="20" step="0.1" placeholder="e.g. 5" className={plain} {...field} /></FormControl><FormDescription>UK REITs: 4-7% net. Commercial: 5-8%. Residential: 3-5%</FormDescription><FormMessage /></FormItem>)} />
@@ -555,7 +569,7 @@ export function Step2ModelRevenue() {
         {isDriver && watchedTypeSub === "realestate_shorttermrental" && (
           <div>
             <h3 className="text-sm font-semibold mb-1">Short-term rental drivers</h3>
-            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue will be computed from these drivers in the next release.</p>
+            <p className="text-xs text-muted-foreground mb-3">Year 1-3 revenue is computed from these drivers on submit.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField control={form.control} name="reStr_rentableUnits" render={({ field }) => (<FormItem><FormLabel>Rentable units / rooms</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 3" className={plain} {...field} /></FormControl><FormDescription>Rooms or properties available for short-term letting</FormDescription><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="reStr_averageNightlyRate" render={({ field }) => (<FormItem><FormLabel>Average nightly rate ({currency})</FormLabel><FormControl><input type="number" min="0" placeholder="e.g. 130" className={plain} {...field} /></FormControl><FormDescription>UK city: £80-200. Coastal: £120-300. London prime: £200-500+</FormDescription><FormMessage /></FormItem>)} />
