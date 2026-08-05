@@ -13,12 +13,14 @@
  * - Output is ComputedRevenue { year1, year2, year3 } as numbers
  * - Empty/invalid inputs default to 0 (via n() helper) or field-specific defaults
  * - Sub-types WITHOUT an explicit growth driver use DEFAULT_GROWTH_Y2/Y3
- * - Sub-types WITH an explicit growth driver (retail same-store, REIT NAV, SaaS B2B monthly,
- *   edu_corptraining retention + expansion) use their own logic
+ * - Sub-types WITH an explicit growth driver (retail same-store, REIT NAV, SaaS 36-month sims,
+ *   edu_corptraining retention + expansion, hosp_catering explicit growthRate) use their own logic
  *
  * Session 2c-a covers 11 sub-types (Sessions 2a + 3a UI coverage).
  * Session 2c-b adds 9 sub-types (Session 3b UI coverage: Healthcare + Education).
- * Session 2c-c will add the remaining 8 (Session 3c UI coverage).
+ * Session 2c-c adds the final 8 sub-types (Session 3c UI coverage: SaaS B2C/Usage,
+ *   E-com Marketplace, Services Agency/Freelance, Hospitality Restaurant/Hotel/Catering).
+ * Total: 27/27 sub-types.
  */
 
 import type { Step2Data } from "./schemas"
@@ -42,6 +44,10 @@ const REIT_DEFAULT_PROPERTY_VALUE = 2_000_000
 
 // Short-term rental: cleaning fee is per booking, amortized over avg stay length.
 const STR_AVG_STAY_NIGHTS = 3
+
+// Freelance: weeklyRate assumes a standard 40-hour week for scaling by
+// actual chargeable hours (which are typically 25-35 for solo consultants).
+const FREELANCE_STD_HOURS_PER_WEEK = 40
 
 // -- HELPERS -------------------------------------------------------------
 
@@ -342,15 +348,122 @@ function computeEduCorp(data: Partial<Step2Data>): ComputedRevenue {
   return { year1: y1, year2: y2, year3: y3 }
 }
 
+// -- SUB-TYPE COMPUTE FUNCTIONS: Session 2c-c (8 sub-types) -------------
+
+// ─── SaaS B2C: 36-month sim, paying = signups × paidConversion ────────
+// K-factor (viral coefficient) is informational for this iteration to avoid
+// compounding sensitivity; add explicit viral amplification if data supports it.
+function computeSaasB2c(data: Partial<Step2Data>): ComputedRevenue {
+  const signups = n(data.saasB2c_monthlySignups)
+  const paidConv = n(data.saasB2c_paidConversionRate, 4) / 100
+  const arpu = n(data.saasB2c_arpu)
+  const monthlyChurnPct = n(data.saasB2c_monthlyChurnRate, 6)
+
+  const newPayingPerMo = signups * paidConv
+  const monthlyCustomers = simulateCustomers(0, newPayingPerMo, monthlyChurnPct)
+  const monthlyMrr = monthlyCustomers.map((c) => c * arpu)
+
+  const sumRange = (start: number, end: number) =>
+    monthlyMrr.slice(start, end).reduce((s, m) => s + m, 0)
+
+  return {
+    year1: sumRange(0, 12),
+    year2: sumRange(12, 24),
+    year3: sumRange(24, 36),
+  }
+}
+
+// ─── SaaS Usage: accounts × units × price × 12 ────────────────────────
+// Steady-state assumption for Y1; monthly account churn is informational.
+function computeSaasUsage(data: Partial<Step2Data>): ComputedRevenue {
+  const accounts = n(data.saasUsage_activeAccounts)
+  const units = n(data.saasUsage_avgUnitsPerAccountPerMonth)
+  const price = n(data.saasUsage_pricePerUnit)
+
+  const y1 = accounts * units * price * 12
+  return applyDefaultGrowth(y1)
+}
+
+// ─── E-commerce Marketplace: GMV × take rate × 12 ─────────────────────
+// activeSellers and transactions/seller are informational cross-checks.
+function computeEcomMkt(data: Partial<Step2Data>): ComputedRevenue {
+  const gmv = n(data.ecomMkt_monthlyGmv)
+  const takeRate = n(data.ecomMkt_takeRate, 10) / 100
+
+  const y1 = gmv * takeRate * 12
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Services Agency: retainers + one-off projects ────────────────────
+// Retainer revenue + project revenue both annualized to monthly cadence
+function computeSvcAgcy(data: Partial<Step2Data>): ComputedRevenue {
+  const clients = n(data.svcAgcy_retainedClients)
+  const arpa = n(data.svcAgcy_arpaPerMonth)
+  const newProjects = n(data.svcAgcy_newProjectsPerMonth)
+  const projectValue = n(data.svcAgcy_averageProjectValue)
+
+  const retainerRevenue = clients * arpa * 12
+  const projectRevenue = newProjects * projectValue * 12
+  const y1 = retainerRevenue + projectRevenue
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Services Freelance: chargeable hrs × implied hourly × weeks ──────
+// weeklyRate assumed to reflect a 40-hour week; scale by actual chargeable hours.
+// This models solo consultants realistically (25-35 chargeable hrs of full week).
+function computeSvcFree(data: Partial<Step2Data>): ComputedRevenue {
+  const hrsPerWeek = n(data.svcFree_chargeableHoursPerWeek)
+  const weeklyRate = n(data.svcFree_weeklyRate)
+  const weeks = n(data.svcFree_weeksWorkedPerYear, 44)
+  const impliedHourly = weeklyRate / FREELANCE_STD_HOURS_PER_WEEK
+
+  const y1 = hrsPerWeek * impliedHourly * weeks
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Hospitality Restaurant: seats × turns × spend × operating days ───
+function computeHospRest(data: Partial<Step2Data>): ComputedRevenue {
+  const seats = n(data.hospRest_seatCount)
+  const turns = n(data.hospRest_tableTurnsPerDay)
+  const spend = n(data.hospRest_averageSpendPerCover)
+  const days = n(data.hospRest_operatingDaysPerYear, 350)
+
+  const y1 = seats * turns * spend * days
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Hospitality Hotel: room-nights × ADR × (1 + F&B%) ────────────────
+// Parallels health_hospital formula. F&B typically 5-70% depending on service level.
+function computeHospHotel(data: Partial<Step2Data>): ComputedRevenue {
+  const rooms = n(data.hospHotel_roomCount)
+  const occ = n(data.hospHotel_occupancyRate, 72) / 100
+  const adr = n(data.hospHotel_averageDailyRate)
+  const fbPct = n(data.hospHotel_foodBeverageRevenuePct, 30) / 100
+
+  const y1 = rooms * 365 * occ * adr * (1 + fbPct)
+  return applyDefaultGrowth(y1)
+}
+
+// ─── Hospitality Catering: events × avg value with explicit growth ────
+// growthRate is an explicit YoY driver (catering scales fast in early years).
+function computeHospCater(data: Partial<Step2Data>): ComputedRevenue {
+  const events = n(data.hospCater_eventsPerMonth)
+  const eventValue = n(data.hospCater_averageEventValue)
+  const growth = n(data.hospCater_growthRate, 15) / 100
+
+  const y1 = events * eventValue * 12
+  const y2 = y1 * (1 + growth)
+  const y3 = y2 * (1 + growth)
+  return { year1: y1, year2: y2, year3: y3 }
+}
+
 // -- DISPATCHER ---------------------------------------------------------
 
 /**
  * Main entry point. Returns computed year1/2/3 revenue for the given sub-type,
- * or null if:
- *   - subType is undefined
- *   - the sub-type is not yet implemented (Session 2c-c will fill remaining 8)
+ * or null if subType is undefined.
  *
- * Callers should treat null as "compute not available yet — fall back to top-line".
+ * All 27 sub-types are now wired for driver-based revenue compute.
  */
 export function computeRevenue(
   subType: BusinessTypeSub | undefined,
@@ -383,9 +496,16 @@ export function computeRevenue(
     case "edu_tutoring":                return computeEduTut(data)
     case "edu_corptraining":            return computeEduCorp(data)
 
-    // Session 2c-c will add: saas_b2c, saas_usage, ecom_marketplace,
-    // services_agency, services_freelance, hosp_restaurant, hosp_hotel,
-    // hosp_catering
+    // Session 2c-c: Session 3c coverage (final 8 sub-types)
+    case "saas_b2c":                    return computeSaasB2c(data)
+    case "saas_usage":                  return computeSaasUsage(data)
+    case "ecom_marketplace":            return computeEcomMkt(data)
+    case "services_agency":             return computeSvcAgcy(data)
+    case "services_freelance":          return computeSvcFree(data)
+    case "hosp_restaurant":             return computeHospRest(data)
+    case "hosp_hotel":                  return computeHospHotel(data)
+    case "hosp_catering":               return computeHospCater(data)
+
     default:
       return null
   }
