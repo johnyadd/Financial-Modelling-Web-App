@@ -24,6 +24,13 @@ export function FinanystHero() {
 
       <div className="relative max-w-6xl mx-auto px-6 pt-24 pb-20">
 
+        {/* Founder badge */}
+        <div className="flex justify-center mb-4 animate-fade-in-up">
+          <p className="text-xs text-muted-foreground font-medium tracking-wide">
+            Built by a fractional CFO. The tool I always wished existed.
+          </p>
+        </div>
+
         {/* Eyebrow */}
         <div className="flex justify-center mb-8 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/60 backdrop-blur-sm px-4 py-1.5 text-xs text-muted-foreground">
@@ -49,7 +56,7 @@ export function FinanystHero() {
 
         {/* Positioning line */}
         <p className="text-sm text-muted-foreground text-center max-w-xl mx-auto mb-12 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-          For founders, finance teams, and advisors who expect more than static spreadsheets.
+          For advisors, finance teams, and founders who expect more than static spreadsheets.
         </p>
 
         {/* CTAs */}
