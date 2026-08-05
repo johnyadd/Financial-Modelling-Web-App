@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuestionnaireStore } from "@/store/questionnaire-store"
 import { step2Schema, type Step2Data } from "@/lib/schemas"
 import { BUSINESS_TYPE_HIERARCHY, type BusinessTypeMain, type BusinessTypeSub } from "@/lib/schemas/assumptions"
-import { computeRevenue, deriveGrowthRate } from "@/lib/revenue-compute"
+import { computeRevenue, deriveGrowthRate, type ComputedRevenue } from "@/lib/revenue-compute"
 import { MODEL_TYPES, REVENUE_MODELS, PROJECTION_YEARS, GROWTH_DRIVERS } from "@/lib/questionnaire-data"
 import { BUSINESS_GOALS } from "@/lib/goals"
 import { useBenchmarks } from "@/hooks/use-benchmarks"
@@ -239,6 +239,19 @@ export function Step2ModelRevenue() {
     }
   }, [watchedTypeMain, watchedTypeSub, form])
 
+  // Task A: reactive live preview. Subscribes to all form values via watch()
+  // and calls computeRevenue on every keystroke. Self-gates via preview being null.
+  const watchedAllValues = form.watch()
+  let preview: ComputedRevenue | null = null
+  if (isDriver && watchedTypeSub) {
+    const computed = computeRevenue(watchedTypeSub as BusinessTypeSub, watchedAllValues)
+    // Only surface preview once at least one field produces a non-zero result —
+    // avoids showing £0/£0/£0 for a freshly-picked sub-type with empty fields.
+    if (computed && (computed.year1 > 0 || computed.year2 > 0 || computed.year3 > 0)) {
+      preview = computed
+    }
+  }
+
   // Session 2c: when in driver mode, compute revenue from drivers before submit.
   // This populates year1/2/3Revenue + growth rates so downstream steps
   // (costs, WC, valuation) work with the computed values.
@@ -261,6 +274,22 @@ export function Step2ModelRevenue() {
 
     updateStep2(finalValues)
     nextStep()
+  }
+
+  // Task A helpers: currency formatting and YoY growth display
+  const formatCurrency = (n: number) => {
+    return new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: currency,
+      maximumFractionDigits: 0,
+    }).format(n)
+  }
+
+  const growthDisplay = (base: number, target: number): string => {
+    if (base === 0) return ""
+    const pct = ((target - base) / base) * 100
+    const sign = pct >= 0 ? "+" : ""
+    return `${sign}${pct.toFixed(0)}%`
   }
 
   const plain = "flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -822,6 +851,39 @@ export function Step2ModelRevenue() {
               <SparklesIcon className="w-4 h-4 inline mr-1 -mt-0.5" />
               Driver fields for this sub-type are coming in the next release. For now, please switch to <strong>Top-line yearly totals</strong> mode.
             </p>
+          </div>
+        )}
+
+        {/* Task A: Live revenue preview — reactive to any driver change */}
+        {preview && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <SparklesIcon className="w-4 h-4 text-primary" />
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Based on your drivers
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Year 1</p>
+                <p className="text-xl font-semibold tabular-nums">{formatCurrency(preview.year1)}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">&nbsp;</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Year 2</p>
+                <p className="text-xl font-semibold tabular-nums">{formatCurrency(preview.year2)}</p>
+                <p className="text-xs text-primary/80 mt-0.5 tabular-nums">
+                  {growthDisplay(preview.year1, preview.year2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Year 3</p>
+                <p className="text-xl font-semibold tabular-nums">{formatCurrency(preview.year3)}</p>
+                <p className="text-xs text-primary/80 mt-0.5 tabular-nums">
+                  {growthDisplay(preview.year2, preview.year3)}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
