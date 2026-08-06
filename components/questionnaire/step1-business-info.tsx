@@ -31,10 +31,10 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Building2Icon, ArrowRightIcon } from "lucide-react"
+import { Building2Icon, ArrowRightIcon, RotateCcwIcon } from "lucide-react"
 
 export function Step1BusinessInfo() {
-  const { data, updateStep1, nextStep } = useQuestionnaireStore()
+  const { data, updateStep1, nextStep, resetQuestionnaire } = useQuestionnaireStore()
 
   const form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
@@ -63,12 +63,47 @@ export function Step1BusinessInfo() {
     nextStep()
   }
 
+  // Task B: destructive-action confirmation. Uses native window.confirm — simple,
+  // universally understood, no new component dependency. Clears all 4 steps and
+  // returns to the goal picker (currentStep 0).
+  function handleStartOver() {
+    const confirmed = window.confirm(
+      "Start over? This will clear all your assumptions across all 4 steps. This can't be undone."
+    )
+    if (confirmed) {
+      resetQuestionnaire()
+      form.reset({
+        businessName: "",
+        industry: "",
+        subSector: "",
+        businessStage: "",
+        country: "",
+        currency: "",
+        foundedYear: "",
+        employeeCount: "",
+        businessDescription: "",
+      })
+    }
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Building2Icon className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-semibold">Business information</h2>
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Building2Icon className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Business information</h2>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleStartOver}
+            className="text-xs text-muted-foreground hover:text-destructive gap-1.5 h-auto py-1.5 px-2"
+          >
+            <RotateCcwIcon className="w-3 h-3" />
+            Start over
+          </Button>
         </div>
         <p className="text-sm text-muted-foreground -mt-4">
           Tell us about your business so we can tailor the financial model to your sector.
