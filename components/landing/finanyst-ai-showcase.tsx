@@ -72,7 +72,7 @@ export function FinanystAIShowcase() {
                 <div className="relative">
                   <input
                     type="text"
-                    value="250%"
+                    value="120%"
                     readOnly
                     className="w-full px-3 py-2 rounded-lg border-2 border-primary/60 bg-primary/5 text-sm font-semibold text-foreground pr-16"
                   />
@@ -92,10 +92,10 @@ export function FinanystAIShowcase() {
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">medium</span>
                 </div>
                 <p className="text-xs text-foreground leading-relaxed mb-2">
-                  Pre-revenue fintech in emerging market needs aggressive growth, but Ghana&apos;s smaller market size and funding constraints warrant moderating from developed-market rates.
+                  UK B2B fintech at Seed+ typically grows 100-140% year 1. Post-2023 funding conditions and FCA compliance overhead warrant moderating from US SaaS benchmarks.
                 </p>
                 <p className="text-[10px] text-muted-foreground italic">
-                  Source: Emerging market fintech benchmarks · Partech Africa Report 2023
+                  Source: UK Fintech Benchmarks · Beauhurst UK Startup Report 2024
                 </p>
               </div>
             </div>
