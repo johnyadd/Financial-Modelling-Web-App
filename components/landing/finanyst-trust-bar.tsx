@@ -1,5 +1,4 @@
-import { CheckCircle2Icon, ShieldCheckIcon, ZapIcon, GlobeIcon, SparklesIcon } from "lucide-react"
-
+import { CheckCircle2Icon, ShieldCheckIcon, ZapIcon, GlobeIcon, SparklesIcon, LayersIcon } from "lucide-react"
 const TRUST_ITEMS = [
   {
     icon: <CheckCircle2Icon className="w-5 h-5" />,
@@ -10,6 +9,11 @@ const TRUST_ITEMS = [
     icon: <ZapIcon className="w-5 h-5" />,
     label: "AI-powered defaults",
     detail: "Contextual suggestions across 32 assumption fields.",
+  },
+  {
+    icon: <LayersIcon className="w-5 h-5" />,
+    label: "27 business sub-types",
+    detail: "Sector-specific revenue drivers, not generic industry templates.",
   },
   {
     icon: <ShieldCheckIcon className="w-5 h-5" />,
@@ -27,7 +31,6 @@ const TRUST_ITEMS = [
     detail: "Custom branding for accounting firms and CFOs.",
   },
 ]
-
 export function FinanystTrustBar() {
   return (
     <section className="relative border-y border-border/60 py-14 bg-muted/20">
@@ -35,7 +38,7 @@ export function FinanystTrustBar() {
         <p className="text-xs uppercase tracking-widest text-muted-foreground text-center mb-10 font-medium">
           Why teams are switching to Finanyst
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
           {TRUST_ITEMS.map((item, i) => (
             <div key={i} className="text-center">
               <div className="flex justify-center mb-3 text-primary">{item.icon}</div>
