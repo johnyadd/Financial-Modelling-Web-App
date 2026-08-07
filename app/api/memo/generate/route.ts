@@ -54,8 +54,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ownership check - only the model's owner can generate memos for it
-    if (model.user_id && model.user_id !== user.id) {
+    // Ownership check - model_inputs.user_id references profiles.id (not auth.users.id).
+    // Load the current user's profile so we compare against the right identity layer.
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json(
+        { error: "Profile not found", detail: profileError?.message },
+        { status: 404 }
+      )
+    }
+
+    if (model.user_id && model.user_id !== profile.id) {
       return NextResponse.json(
         { error: "Not authorized to access this model" },
         { status: 403 }
