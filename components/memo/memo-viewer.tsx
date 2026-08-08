@@ -19,6 +19,8 @@ interface MemoViewerProps {
   memo: InvestorMemo
   businessName?: string
   actions?: React.ReactNode
+  /** Optional DOM id — used by parent to grab element for PDF export */
+  id?: string
 }
 
 /**
@@ -26,9 +28,9 @@ interface MemoViewerProps {
  * Fixed max-w-3xl reading column, brand-consistent typography.
  * Actions (regenerate, PDF, copy) render at the top via `actions` prop.
  */
-export function MemoViewer({ memo, businessName, actions }: MemoViewerProps) {
+export function MemoViewer({ memo, businessName, actions, id }: MemoViewerProps) {
   return (
-    <article className="max-w-3xl mx-auto px-6 py-8 space-y-10">
+    <article id={id} className="max-w-3xl mx-auto px-6 py-8 space-y-10 bg-background">
 
       {/* Header */}
       <header className="space-y-4 pb-6 border-b border-border">
