@@ -19,6 +19,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeftIcon, ArrowRightIcon, ReceiptIcon } from "lucide-react"
+import { FieldWarning } from "@/components/validation/field-warning"
+import { checkPercentBounds, checkSalarySanity, checkOpexVsRevenue } from "@/lib/validation/step3-checks"
 
 export function Step3CostsMargins() {
   const { data, updateStep3, nextStep, prevStep } = useQuestionnaireStore()
@@ -61,6 +63,15 @@ export function Step3CostsMargins() {
   function onSubmit(values: Step3Data) {
     updateStep3(values)
     nextStep()
+  }
+
+  // Layer 1 field-level validation warnings — reactive on form value changes
+  const warnings = {
+    grossMargin:        checkPercentBounds(w.grossMargin ?? "", "Gross margin"),
+    cogsPercent:        checkPercentBounds(w.cogsPercent ?? "", "COGS"),
+    marketingBudgetPct: checkPercentBounds(w.marketingBudgetPct ?? "", "Marketing budget"),
+    rdBudgetPct:        checkPercentBounds(w.rdBudgetPct ?? "", "R&D budget"),
+    depreciationPct:    checkPercentBounds(w.depreciationPct ?? "", "Depreciation"),
   }
 
   return (
@@ -117,6 +128,7 @@ export function Step3CostsMargins() {
                 </FormControl>
                 <FormDescription>Revenue minus direct costs / Revenue Ã— 100</FormDescription>
                 <FormMessage />
+              <FieldWarning warning={warnings.grossMargin} />
               </FormItem>
             )}
           />
@@ -219,6 +231,7 @@ export function Step3CostsMargins() {
                   </FormControl>
                   <FormDescription>Direct costs of delivering your product/service</FormDescription>
                   <FormMessage />
+              <FieldWarning warning={warnings.cogsPercent} />
                 </FormItem>
               )}
             />
@@ -247,6 +260,7 @@ export function Step3CostsMargins() {
                     />
                   </FormControl>
                   <FormMessage />
+              <FieldWarning warning={warnings.marketingBudgetPct} />
                 </FormItem>
               )}
             />
@@ -275,6 +289,7 @@ export function Step3CostsMargins() {
                     />
                   </FormControl>
                   <FormMessage />
+              <FieldWarning warning={warnings.rdBudgetPct} />
                 </FormItem>
               )}
             />
@@ -452,6 +467,7 @@ export function Step3CostsMargins() {
                   </FormControl>
                   <FormDescription>Annual % of asset value depreciated</FormDescription>
                   <FormMessage />
+              <FieldWarning warning={warnings.depreciationPct} />
                 </FormItem>
               )}
             />
