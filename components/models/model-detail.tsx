@@ -8,6 +8,7 @@ import { MODEL_TYPES } from "@/lib/questionnaire-data"
 import { BUSINESS_GOALS } from "@/lib/goals"
 import { GenerateButton } from "@/components/models/generate-button"
 import { ExportButton } from "@/components/models/export-button"
+import { MemoButton } from "@/components/memo/memo-button"
 import type { UserSubscription } from "@/lib/subscription"
 import {
   RevenueEbitdaChart,
@@ -303,6 +304,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
                 currentTier={subscription?.tier ?? "free"}
               />
             )}
+            {isComplete && <MemoButton modelInputId={model.id} />}
             <GenerateButton modelInputId={model.id} status={model.status} />
           </div>
         </div>
