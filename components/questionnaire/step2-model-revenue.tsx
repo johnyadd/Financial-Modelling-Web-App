@@ -23,6 +23,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeftIcon, ArrowRightIcon, TrendingUpIcon, SparklesIcon } from "lucide-react"
+import { FieldWarning } from "@/components/validation/field-warning"
+import { checkGrowthRateBounds, checkRevenueNegative } from "@/lib/validation/step2-checks"
 
 // Sub-types that have driver UI blocks built — all 27 sub-types as of Session 3c
 const BUILT_SUB_TYPES = [
@@ -242,6 +244,20 @@ export function Step2ModelRevenue() {
   // Task A: reactive live preview. Subscribes to all form values via watch()
   // and calls computeRevenue on every keystroke. Self-gates via preview being null.
   const watchedAllValues = form.watch()
+
+  // Session 3 field-level validation — Step 2 top-line revenue mode
+  const watchedYear1Revenue = form.watch("year1Revenue")
+  const watchedYear2Revenue = form.watch("year2Revenue")
+  const watchedYear3Revenue = form.watch("year3Revenue")
+
+  const warnings = {
+    year1Revenue:    checkRevenueNegative(watchedYear1Revenue ?? "", "Year 1"),
+    year2Revenue:    checkRevenueNegative(watchedYear2Revenue ?? "", "Year 2"),
+    year3Revenue:    checkRevenueNegative(watchedYear3Revenue ?? "", "Year 3"),
+    revenueGrowthY1: checkGrowthRateBounds(watchedGrowthY1 ?? "", 1),
+    revenueGrowthY2: checkGrowthRateBounds(watchedGrowthY2 ?? "", 2),
+    revenueGrowthY3: checkGrowthRateBounds(watchedGrowthY3 ?? "", 3),
+  }
   let preview: ComputedRevenue | null = null
   if (isDriver && watchedTypeSub) {
     const computed = computeRevenue(watchedTypeSub as BusinessTypeSub, watchedAllValues)
@@ -899,9 +915,10 @@ export function Step2ModelRevenue() {
                     <FormItem>
                       <FormLabel>Year {i + 1} revenue</FormLabel>
                       <FormControl>
-                        <input type="number" min="0" placeholder="e.g. 150000" className={plain} {...field} />
+                        <input type="number" placeholder="e.g. 150000" className={plain} {...field} />
                       </FormControl>
                       <FormMessage />
+                      <FieldWarning warning={warnings[key]} />
                     </FormItem>
                   )}
                 />
@@ -940,6 +957,7 @@ export function Step2ModelRevenue() {
                         {...field} />
                     </FormControl>
                     <FormMessage />
+              <FieldWarning warning={warnings.revenueGrowthY1} />
                   </FormItem>
                 )}
               />
@@ -966,6 +984,7 @@ export function Step2ModelRevenue() {
                         {...field} />
                     </FormControl>
                     <FormMessage />
+              <FieldWarning warning={warnings.revenueGrowthY2} />
                   </FormItem>
                 )}
               />
@@ -992,6 +1011,7 @@ export function Step2ModelRevenue() {
                         {...field} />
                     </FormControl>
                     <FormMessage />
+              <FieldWarning warning={warnings.revenueGrowthY3} />
                   </FormItem>
                 )}
               />
