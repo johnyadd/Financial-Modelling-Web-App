@@ -4,6 +4,8 @@ import { useQuestionnaireStore } from "@/store/questionnaire-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MODEL_TYPES } from "@/lib/questionnaire-data"
+import { CrossFieldPanel } from "@/components/validation/cross-field-panel"
+import { runAllCrossFieldChecks } from "@/lib/validation/cross-field-checks"
 import {
   ArrowLeftIcon,
   CheckCircle2Icon,
@@ -66,6 +68,9 @@ export function Step5Review({ onSubmit, submitting = false }: Step5ReviewProps) 
 
   const modelLabel = MODEL_TYPES.find((m) => m.value === step2.modelType)?.label
 
+  // Layer 2 cross-field validation warnings (advisory, not blocking submit)
+  const crossFieldWarnings = runAllCrossFieldChecks({ step1, step2, step3, step4 })
+
   function formatCurrency(val?: string) {
     if (!val) return undefined
     return `${currency} ${parseInt(val).toLocaleString()}`
@@ -85,6 +90,8 @@ export function Step5Review({ onSubmit, submitting = false }: Step5ReviewProps) 
       <p className="text-sm text-muted-foreground -mt-4">
         Check everything looks correct before generating your model.
       </p>
+
+      <CrossFieldPanel warnings={crossFieldWarnings} />
 
       {modelLabel && (
         <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4 flex items-center justify-between">
