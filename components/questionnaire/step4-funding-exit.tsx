@@ -193,7 +193,7 @@ export function Step4FundingExit() {
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>Cash balance Ã· monthly burn</FormDescription>
+                  <FormDescription>Cash balance ÷ monthly burn</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
