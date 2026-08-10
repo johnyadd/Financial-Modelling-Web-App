@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeftIcon, ArrowRightIcon, BanknoteIcon } from "lucide-react"
+import { FieldWarning } from "@/components/validation/field-warning"
+import { checkDiscountRate, checkTerminalGrowthRate, checkExitMultiple, checkInterestRate } from "@/lib/validation/step4-checks"
 
 const EXIT_HORIZONS = ["2 years", "3 years", "5 years", "7 years", "10 years+"]
 
@@ -50,6 +52,15 @@ export function Step4FundingExit() {
     discountRate:       form.watch("discountRate"),
     terminalGrowthRate: form.watch("terminalGrowthRate"),
     targetExitMultiple: form.watch("targetExitMultiple"),
+    interestRate:       form.watch("interestRate"),
+  }
+
+  // Layer 1 field-level validation warnings — reactive on form value changes
+  const warnings = {
+    discountRate:       checkDiscountRate(w.discountRate ?? ""),
+    terminalGrowthRate: checkTerminalGrowthRate(w.terminalGrowthRate ?? ""),
+    targetExitMultiple: checkExitMultiple(w.targetExitMultiple ?? ""),
+    interestRate:       checkInterestRate(w.interestRate ?? ""),
   }
 
   function onSubmit(values: Step4Data) {
@@ -234,6 +245,7 @@ export function Step4FundingExit() {
                     <input type="number" min="0" max="100" placeholder="e.g. 8.5" className={plainInput("")} {...field} />
                   </FormControl>
                   <FormMessage />
+              <FieldWarning warning={warnings.interestRate} />
                 </FormItem>
               )}
             />
@@ -292,8 +304,9 @@ export function Step4FundingExit() {
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>e.g. 5x = 5Ã— annual revenue at exit</FormDescription>
+                  <FormDescription>e.g. 5x = 5× annual revenue at exit</FormDescription>
                   <FormMessage />
+              <FieldWarning warning={warnings.targetExitMultiple} />
                 </FormItem>
               )}
             />
@@ -329,6 +342,7 @@ export function Step4FundingExit() {
                       : "Typical range: 15â€“25% for early-stage startups"}
                   </FormDescription>
                   <FormMessage />
+              <FieldWarning warning={warnings.discountRate} />
                 </FormItem>
               )}
             />
@@ -358,6 +372,7 @@ export function Step4FundingExit() {
                   </FormControl>
                   <FormDescription>Long-run perpetuity growth (typically 2â€“4%)</FormDescription>
                   <FormMessage />
+              <FieldWarning warning={warnings.terminalGrowthRate} />
                 </FormItem>
               )}
             />
