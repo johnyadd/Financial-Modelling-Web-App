@@ -9,6 +9,7 @@ import { BUSINESS_GOALS } from "@/lib/goals"
 import { GenerateButton } from "@/components/models/generate-button"
 import { ExportButton } from "@/components/models/export-button"
 import { MemoButton } from "@/components/memo/memo-button"
+import { EditModelButton } from "@/components/models/edit-model-button"
 import type { UserSubscription } from "@/lib/subscription"
 import {
   RevenueEbitdaChart,
@@ -305,6 +306,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
               />
             )}
             {isComplete && <MemoButton modelInputId={model.id} />}
+            <EditModelButton model={model} />
             <GenerateButton modelInputId={model.id} status={model.status} />
           </div>
         </div>

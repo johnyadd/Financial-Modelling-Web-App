@@ -17,6 +17,13 @@ interface QuestionnaireStore {
   updateStep3: (data: Partial<Step3Data>) => void
   updateStep4: (data: Partial<Step4Data>) => void
   resetQuestionnaire: () => void
+  loadFromModel: (payload: {
+    goalId?: string | null
+    step1?: Record<string, unknown> | null
+    step2?: Record<string, unknown> | null
+    step3?: Record<string, unknown> | null
+    step4?: Record<string, unknown> | null
+  }) => void
   isStepComplete: (step: number) => boolean
 }
 
@@ -58,6 +65,18 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
 
       resetQuestionnaire: () =>
         set({ currentStep: 0, selectedGoalId: null, data: initialData }),
+
+      loadFromModel: (payload) =>
+        set({
+          currentStep: 1,
+          selectedGoalId: payload.goalId ?? null,
+          data: {
+            step1: (payload.step1 ?? {}) as Partial<Step1Data>,
+            step2: (payload.step2 ?? {}) as Partial<Step2Data>,
+            step3: (payload.step3 ?? {}) as Partial<Step3Data>,
+            step4: (payload.step4 ?? {}) as Partial<Step4Data>,
+          },
+        }),
 
       isStepComplete: (step) => {
         const { data } = get()
