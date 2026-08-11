@@ -98,7 +98,7 @@ export function Step3CostsMargins() {
           />
         )}
 
-        {/* â”€â”€ gross margin + cost driver â€” BENCHMARK WIRED â”€â”€ */}
+        {/* ── gross margin + cost driver â€” BENCHMARK WIRED ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -126,7 +126,7 @@ export function Step3CostsMargins() {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Revenue minus direct costs / Revenue Ã— 100</FormDescription>
+                <FormDescription>Revenue minus direct costs / Revenue × 100</FormDescription>
                 <FormMessage />
               <FieldWarning warning={warnings.grossMargin} />
               </FormItem>
@@ -155,7 +155,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* â”€â”€ headcount & salaries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── headcount & salaries ─────────────────────────── */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Headcount & payroll</h3>
           <p className="text-xs text-muted-foreground mb-3">
@@ -195,7 +195,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* â”€â”€ operating expenses â€” BENCHMARK WIRED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── operating expenses â€” BENCHMARK WIRED ────────── */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Operating expenses</h3>
           <p className="text-xs text-muted-foreground mb-3">
@@ -359,7 +359,7 @@ export function Step3CostsMargins() {
 
         <Separator />
 
-        {/* â”€â”€ profitability & capex â€” BENCHMARK WIRED â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── profitability & capex â€” BENCHMARK WIRED ──────── */}
         <div>
           <h3 className="text-sm font-semibold mb-1">Profitability & capital expenditure</h3>
           <p className="text-xs text-muted-foreground mb-3">Target margins and capital investment needed.</p>
@@ -370,7 +370,7 @@ export function Step3CostsMargins() {
               name="ebitdaMarginY1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target EBITDA margin â€“ Year 1 (%)</FormLabel>
+                  <FormLabel>Target EBITDA margin – Year 1 (%)</FormLabel>
                   <FormControl>
                     <BenchmarkInput
                       type="number"
@@ -397,7 +397,7 @@ export function Step3CostsMargins() {
               name="ebitdaMarginY3"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target EBITDA margin â€“ Year 3 (%)</FormLabel>
+                  <FormLabel>Target EBITDA margin – Year 3 (%)</FormLabel>
                   <FormControl>
                     <BenchmarkInput
                       type="number"
@@ -426,7 +426,7 @@ export function Step3CostsMargins() {
               name="capexY1"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CAPEX â€“ Year 1 ({currency})</FormLabel>
+                  <FormLabel>CAPEX – Year 1 ({currency})</FormLabel>
                   <FormControl>
                     <input
                       type="number"
