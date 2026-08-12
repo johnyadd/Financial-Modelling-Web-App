@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
     const staticResult = staticFallback(assumptionKey, context)
 
     // If assumption has no static logic OR context is rich enough for LLM upgrade, call Claude
-    const shouldCallLLM = assumption.getAISuggestion !== undefined &&
-      (context.industry || context.subSector || context.businessStage)
+    const shouldCallLLM = Boolean(context.industry || context.subSector || context.businessStage)
 
     if (!shouldCallLLM) {
       return NextResponse.json({ suggestion: staticResult, source: "static" })
