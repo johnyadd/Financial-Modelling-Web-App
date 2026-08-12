@@ -11,6 +11,7 @@ import { Step3CostsMargins } from "./step3-costs-margins"
 import { Step4FundingExit } from "./step4-funding-exit"
 import { Step5Review } from "./step5-review"
 import { Card, CardContent } from "@/components/ui/card"
+import { CitationInfoBanner } from "@/components/ui/citation-info-banner"
 
 export function QuestionnaireWizard() {
   const router = useRouter()
@@ -124,7 +125,8 @@ export function QuestionnaireWizard() {
               {submitError}
             </div>
           )}
-          {currentStep === 0 && <Step0GoalSelection />}
+          <CitationInfoBanner />
+            {currentStep === 0 && <Step0GoalSelection />}
           {currentStep === 1 && <Step1BusinessInfo />}
           {currentStep === 2 && <Step2ModelRevenue />}
           {currentStep === 3 && <Step3CostsMargins />}

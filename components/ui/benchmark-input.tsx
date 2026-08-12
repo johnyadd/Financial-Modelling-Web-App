@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown, Minus, SparklesIcon, LoaderIcon, CheckIcon } from "lucide-react"
 import type { BenchmarkEntry } from "@/lib/benchmarks/types"
 import type { AISuggestionContext, AISuggestionResult } from "@/lib/schemas/assumptions"
+import { CitationBadge } from "@/components/ui/citation-badge"
+import { getCitationForKey } from "@/lib/benchmarks/citations"
 
 interface BenchmarkInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -144,11 +146,24 @@ export const BenchmarkInput = forwardRef<HTMLInputElement, BenchmarkInputProps>(
             <p className="text-xs text-muted-foreground mb-2">
               {aiSuggestion.rationale}
             </p>
-            {aiSuggestion.source && (
-              <p className="text-[10px] text-muted-foreground italic mb-2">
-                Source: {aiSuggestion.source}
-              </p>
-            )}
+            {(() => {
+              const cite = assumptionKey ? getCitationForKey(assumptionKey) : null
+              if (cite) {
+                return (
+                  <div className="mb-2">
+                    <CitationBadge citation={cite} label="Source" />
+                  </div>
+                )
+              }
+              if (aiSuggestion.source) {
+                return (
+                  <p className="text-[10px] text-muted-foreground italic mb-2">
+                    Source: {aiSuggestion.source}
+                  </p>
+                )
+              }
+              return null
+            })()}
             <button
               type="button"
               onClick={handleAcceptAI}
