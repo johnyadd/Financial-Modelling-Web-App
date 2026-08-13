@@ -52,6 +52,8 @@ export interface BenchmarkRow {
   thisModel: string
   benchmark: string
   delta: "In range" | "Above" | "Below"
+  /** Named source for the benchmark figure, e.g. "Beauhurst UK Startup Report 2024" */
+  source?: string
 }
 
 export interface KeyAssumption {

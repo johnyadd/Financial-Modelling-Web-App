@@ -92,7 +92,20 @@ ${ctx.sensitivity ? `Sensitivity analysis:
 ${JSON.stringify(ctx.sensitivity, null, 2)}
 ` : ""}
 
-BENCHMARK REFERENCE (use these when making comparisons):
+BENCHMARK REFERENCE (use these when making comparisons - always cite the named source in your output):
+Named UK-first sources to cite:
+- Beauhurst UK Startup Report 2024 (revenue growth, headcount, funding by stage)
+- ONS UK non-financial business accounts 2023 (SME EBITDA and profitability)
+- British Business Bank Small Business Finance Markets 2024 (cash positions, equity finance)
+- Bank of England (terminal growth, inflation target 2%)
+Named analogical sources with explicit UK adjustment:
+- SaaS Capital Index 2024 (gross margin, cogs; UK adjusted +/-3pp)
+- OpenView State of SaaS 2024 (marketing % of revenue, R&D %, burn; UK 5-10pp lower)
+- ProfitWell/Paddle SaaS Benchmarks 2024 (monthly churn)
+- Damodaran cost of capital 2024 (WACC + Seed/A illiquidity premium 400-800bps)
+- Bessemer State of the Cloud 2024 (exit multiples; UK 15-25% discount to US)
+When you cite a benchmark, name the specific source (not "UK data" or "industry benchmark"). Populate the "source" field in every benchmarkComparison entry.
+Existing sector context:
 - UK SaaS B2B Seed+: 100-140% Y1 revenue growth typical (US benchmarks of 200-300% don't apply due to post-2023 UK funding conditions and smaller TAM)
 - UK SaaS Gross Margin: 75-85% best-in-class
 - UK Fintech Series A+: FCA compliance overhead adds 15-20% to opex vs unregulated SaaS
@@ -128,7 +141,7 @@ OUTPUT SCHEMA - respond with ONLY this JSON object, no markdown code fences, no 
     "narrative": "2-3 sentences on the trajectory. Highlight growth pattern, margin evolution, path to profitability. Analyst voice."
   },
   "benchmarkComparison": [
-    { "metric": "e.g. Y1 Revenue Growth", "thisModel": "180%", "benchmark": "100-140% UK SaaS Seed+", "delta": "Above" }
+    { "metric": "e.g. Y1 Revenue Growth", "thisModel": "180%", "benchmark": "100-140% UK SaaS Seed+", "delta": "Above", "source": "e.g. Beauhurst UK Startup Report 2024" }
   ],
   "assumptions": {
     "keyAssumptions": [

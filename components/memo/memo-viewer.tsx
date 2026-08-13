@@ -112,6 +112,9 @@ export function MemoViewer({ memo, businessName, actions, id }: MemoViewerProps)
                   <p className="text-sm font-medium">{row.metric}</p>
                   <DeltaBadge delta={row.delta} />
                 </div>
+                  {row.source && (
+                    <p className="text-[10px] text-muted-foreground italic">Source: {row.source}</p>
+                  )}
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="text-muted-foreground">This model: </span>
