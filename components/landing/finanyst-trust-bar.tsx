@@ -8,7 +8,7 @@ const TRUST_ITEMS = [
   {
     icon: <ZapIcon className="w-5 h-5" />,
     label: "AI-powered defaults",
-    detail: "Contextual suggestions across 32 assumption fields.",
+    detail: "Contextual suggestions across 32 assumption fields, each citing a named source.",
   },
   {
     icon: <LayersIcon className="w-5 h-5" />,
