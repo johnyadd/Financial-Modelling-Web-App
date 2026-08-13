@@ -76,6 +76,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // -- Read-first: serve the stored memo unless regeneration was requested --
+    const force = (body as { force?: boolean }).force === true
+    if (!force) {
+      const { data: storedMemo } = await supabase
+        .from("memos")
+        .select("content, updated_at")
+        .eq("model_input_id", modelId)
+        .eq("audience", audience)
+        .maybeSingle()
+      if (storedMemo?.content) {
+        return NextResponse.json({
+          memo: storedMemo.content,
+          audience,
+          cached: true,
+          generatedAt: storedMemo.updated_at,
+        })
+      }
+    }
+
     // -- Load model output -------------------------------------------------
     const { data: output } = await supabase
       .from("model_outputs")
@@ -143,9 +162,28 @@ export async function POST(request: NextRequest) {
         modelId,
       }
 
+      // -- Persist so subsequent views are instant and cost nothing --------
+      const { error: saveError } = await supabase
+        .from("memos")
+        .upsert(
+          {
+            model_input_id: modelId,
+            user_id:        profile.id,
+            audience,
+            content:        memo,
+            updated_at:     new Date().toISOString(),
+          },
+          { onConflict: "model_input_id,audience" }
+        )
+      if (saveError) {
+        // Non-fatal: the memo is still returned, it just won't be cached.
+        console.error("Memo save error:", saveError.message)
+      }
+
       return NextResponse.json({
         memo,
         audience: "investor",
+        cached: false,
         generatedAt: memo.generatedAt,
       })
     } catch (parseError) {
