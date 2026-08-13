@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -46,7 +46,7 @@ export function QuestionnaireWizard() {
           step4:             data.step4,
           benchmarkSnapshot: {},
           name:              data.step1.businessName
-            ? `${data.step1.businessName} â€” ${data.step2.modelType}`
+            ? `${data.step1.businessName} — ${data.step2.modelType}`
             : null,
         }),
       })
@@ -62,7 +62,7 @@ export function QuestionnaireWizard() {
         throw new Error(result.error ?? "Failed to save model")
       }
 
-      // Success â€” clear store and redirect to model output page
+      // Success — clear store and redirect to model output page
       resetQuestionnaire()
       router.push(`/models/${result.modelInputId}`)
 
