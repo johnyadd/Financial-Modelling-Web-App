@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
@@ -62,7 +62,7 @@ interface ModelDetailProps {
 
 function fmt(val: unknown, currency = "GBP"): string {
   const n = parseFloat(String(val))
-  if (isNaN(n)) return "â€”"
+  if (isNaN(n)) return "—"
   if (Math.abs(n) >= 1_000_000) return `${currency} ${(n / 1_000_000).toFixed(2)}m`
   if (Math.abs(n) >= 1_000) return `${currency} ${(n / 1_000).toFixed(1)}k`
   return `${currency} ${n.toFixed(0)}`
@@ -70,13 +70,13 @@ function fmt(val: unknown, currency = "GBP"): string {
 
 function pct(val: unknown): string {
   const n = parseFloat(String(val))
-  if (isNaN(n)) return "â€”"
+  if (isNaN(n)) return "—"
   return `${n.toFixed(1)}%`
 }
 
 function mul(val: unknown): string {
   const n = parseFloat(String(val))
-  if (isNaN(n)) return "â€”"
+  if (isNaN(n)) return "—"
   return `${n.toFixed(1)}x`
 }
 
@@ -258,7 +258,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
     day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit",
   })
 
-  // Extract output â€” three_statement uses different column
+  // Extract output — three_statement uses different column
   const rawOutput = isThreeStatement
     ? (output?.three_statement ?? output?.dcf_output ?? {})
     : (output?.dcf_output ?? output?.three_statement ?? {})
@@ -295,7 +295,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
               )}
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-1">{s1.businessName ?? modelLabel ?? "Financial model"}</h1>
-            <p className="text-sm text-muted-foreground">{modelLabel} Â· Created {createdAt}</p>
+            <p className="text-sm text-muted-foreground">{modelLabel} · Created {createdAt}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {isComplete && (
@@ -316,7 +316,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
             <SparklesIcon className="w-4 h-4 text-primary flex-shrink-0" />
             <p className="text-sm text-foreground">
               <span className="font-medium">Goal:</span> {goal.icon} {goal.title}
-              <span className="text-muted-foreground mx-2">Â·</span>
+              <span className="text-muted-foreground mx-2">·</span>
               <span className="font-medium">Model:</span> {modelLabel}
             </p>
           </div>
