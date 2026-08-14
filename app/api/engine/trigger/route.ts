@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { computeRevenue } from "@/lib/revenue-compute"
 import { applyScenarioOverrides } from "@/lib/scenarios/types"
 import type { ScenarioSet, ScenarioCase } from "@/lib/scenarios/types"
 
@@ -26,6 +27,25 @@ async function runEngine(
   modelInput: Record<string, unknown>,
   steps: StepData
 ): Promise<Record<string, unknown>> {
+  // Driver-based models compile revenue client-side at submit, so the engine
+  // only ever sees year1/2/3Revenue. Without re-deriving here, a scenario
+  // overriding churn or acquisition would silently return identical revenue.
+  let step2 = steps.step2
+  if (step2.revenueEntryMode === "driverBased") {
+    const computed = computeRevenue(
+      step2.businessTypeSub as Parameters<typeof computeRevenue>[0],
+      step2 as Parameters<typeof computeRevenue>[1]
+    )
+    if (computed) {
+      step2 = {
+        ...step2,
+        year1Revenue: String(Math.round(computed.year1)),
+        year2Revenue: String(Math.round(computed.year2)),
+        year3Revenue: String(Math.round(computed.year3)),
+      }
+    }
+  }
+
   const res = await fetch(`${ENGINE_URL}/calculate`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Engine-Key": ENGINE_KEY },
@@ -34,7 +54,7 @@ async function runEngine(
       model_type:     modelInput.model_type,
       goal_id:        modelInput.goal_id,
       step1:          cleanNulls(modelInput.step1_business as Record<string, unknown>),
-      step2:          steps.step2,
+      step2:          step2,
       step3:          steps.step3,
       step4:          steps.step4,
     }),
