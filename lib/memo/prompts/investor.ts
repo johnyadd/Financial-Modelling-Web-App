@@ -16,6 +16,8 @@ interface PromptContext {
   cashFlow: Record<string, unknown>[]
   scenarios: Record<string, Record<string, unknown>> | null
   sensitivity: Record<string, unknown> | null
+  /** Pre-computed bridge text per case. Absent when no scenarios are defined. */
+  scenarioBridge?: string | null
 }
 
 /**
@@ -92,6 +94,23 @@ ${JSON.stringify(ctx.scenarios, null, 2)}
 ${ctx.sensitivity ? `Sensitivity analysis:
 ${JSON.stringify(ctx.sensitivity, null, 2)}
 ` : ""}
+
+${ctx.scenarioBridge ? `SCENARIO CASES (computed, not estimated - these are real engine runs):
+${ctx.scenarioBridge}
+
+Populate scenarioComparison. The narrative must say what the SPREAD means for
+the raise - whether the ask still clears its cost of capital under downside, and
+which single assumption the outcome hinges on. Do not merely restate the numbers;
+a reader can see those.
+
+You have exactly three computed points. Do NOT state a precise threshold or
+breakeven value - three points cannot support one, and an interpolated figure
+presented as derived is worse than an honest range. Say the turning point falls
+BETWEEN the two cases that bracket it, naming both.
+
+When a base value is near zero, state movement in ABSOLUTE terms only.
+Percentage change from a near-zero base is arithmetically valid and practically
+meaningless - never write figures like "5,968% increase".` : ""}
 
 BENCHMARK REFERENCE (use these when making comparisons - always cite the named source in your output):
 ${buildBenchmarkReferenceBlock()}
@@ -179,6 +198,13 @@ OUTPUT SCHEMA - respond with ONLY this JSON object, no markdown code fences, no 
     "nextMilestone": "e.g. GBP 1M ARR before Series A"
   } OR null if not a fundraise
 }
+
+  "scenarioComparison": {
+    "narrative": "2-3 sentences on what the spread means for the raise, naming the assumption the outcome hinges on and the threshold where it turns.",
+    "cases": [
+      { "label": "Upside", "inputsChanged": "e.g. Churn 1.8% to 1.2%, acquisition 10 to 14/month", "equityValue": "e.g. GBP 488k", "keyMovement": "The single most consequential movement, with figures" }
+    ]
+  } OR null if no scenario cases were supplied above
 
 CONSTRAINTS:
 - benchmarkComparison: 3-5 rows

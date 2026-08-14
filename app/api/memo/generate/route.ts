@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import Anthropic from "@anthropic-ai/sdk"
 import { buildInvestorMemoPrompt } from "@/lib/memo/prompts/investor"
+import { diffInputs, diffOutputs, formatBridgeForPrompt } from "@/lib/scenarios/bridge"
+import { SCENARIO_LABELS } from "@/lib/scenarios/types"
+import type { ScenarioSet } from "@/lib/scenarios/types"
 import type {
   InvestorMemo,
   MemoGenerateRequest,
@@ -136,7 +139,24 @@ export async function POST(request: NextRequest) {
     const sensitivity = (dcfOut.sensitivity ?? null) as Record<string, unknown> | null
 
     // -- Build prompt ------------------------------------------------------
+    // Bridge text per computed case, or null when no scenarios are defined.
+    let scenarioBridge: string | null = null
+    const scenarioSet = (model.scenarios ?? {}) as ScenarioSet
+    const scenarioOuts = output.scenario_outputs as Record<string, { summary?: Record<string, unknown> }> | null
+    if (scenarioOuts) {
+      const blocks: string[] = []
+      for (const c of ["upside", "downside"] as const) {
+        const caseOut = scenarioOuts[c]
+        if (!caseOut) continue
+        const inputDeltas = diffInputs({ step2, step3, step4 }, scenarioSet[c])
+        const outputDeltas = diffOutputs(summary, caseOut.summary ?? {})
+        blocks.push(formatBridgeForPrompt(SCENARIO_LABELS[c], inputDeltas, outputDeltas))
+      }
+      if (blocks.length > 0) scenarioBridge = blocks.join("\n\n")
+    }
+
     const prompt = buildInvestorMemoPrompt({
+      scenarioBridge,
       step1, step2, step3, step4,
       modelType,
       summary, pnl, balanceSheet, cashFlow, scenarios, sensitivity,

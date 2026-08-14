@@ -22,6 +22,8 @@ export interface InvestorMemo {
     narrative: string
   }
   benchmarkComparison: BenchmarkRow[]
+  /** Present only when the model has upside or downside cases computed. */
+  scenarioComparison?: ScenarioComparison | null
   assumptions: {
     keyAssumptions: KeyAssumption[]
   }
@@ -96,4 +98,21 @@ export interface MemoGenerateErrorResponse {
   error: string
   detail?: string
   rawText?: string // included when JSON parsing fails, so you can debug
+}
+
+export interface ScenarioCaseSummary {
+  /** "Upside" or "Downside". */
+  label: string
+  /** What was changed from base, in plain language. */
+  inputsChanged: string
+  /** Equity value under this case, formatted with currency. */
+  equityValue: string
+  /** The single most consequential movement, named with figures. */
+  keyMovement: string
+}
+
+export interface ScenarioComparison {
+  /** What the spread means for the raise. The part a spreadsheet cannot produce. */
+  narrative: string
+  cases: ScenarioCaseSummary[]
 }

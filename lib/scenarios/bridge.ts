@@ -118,5 +118,5 @@ export function formatBridgeForPrompt(
     const pct = o.deltaPct !== null ? ` (${o.deltaPct.toFixed(1)}%)` : ""
     lines.push(`    ${o.label}: ${o.base} -> ${o.compared}${pct}`)
   }
-  return lines.join("\\n")
+  return lines.join("\n")
 }

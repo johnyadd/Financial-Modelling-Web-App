@@ -40,5 +40,5 @@ export function buildBenchmarkReferenceBlock(): string {
     const adj = c.confidenceTier === "medium" ? " (UK-adjusted)" : ""
     lines.push(`- ${range} | Source: ${c.source} ${c.vintage}${adj}`)
   }
-  return lines.join("\\n")
+  return lines.join("\n")
 }
