@@ -170,6 +170,32 @@ export function MemoViewer({ memo, businessName, actions, id }: MemoViewerProps)
         </div>
       </Section>
 
+        {/* Scenario Comparison - present only when cases were computed */}
+        {memo.scenarioComparison && memo.scenarioComparison.cases.length > 0 && (
+          <Section icon={<ScaleIcon className="w-4 h-4" />} title="Scenario Comparison">
+            <p className="text-sm leading-relaxed mb-5">
+              {memo.scenarioComparison.narrative}
+            </p>
+            <div className="space-y-3">
+              {memo.scenarioComparison.cases.map((c, i) => (
+                <div key={i} className="rounded-lg border border-border p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-sm font-medium">{c.label}</p>
+                    <p className="text-sm font-mono">{c.equityValue}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="uppercase tracking-wide">Changed: </span>
+                    {c.inputsChanged}
+                  </p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {c.keyMovement}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
       {/* Risks */}
       <Section icon={<AlertTriangleIcon className="w-4 h-4" />} title="Risks & Mitigations">
         <div className="space-y-4">

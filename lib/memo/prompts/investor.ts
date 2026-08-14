@@ -108,6 +108,15 @@ breakeven value - three points cannot support one, and an interpolated figure
 presented as derived is worse than an honest range. Say the turning point falls
 BETWEEN the two cases that bracket it, naming both.
 
+Identify the bracketing pair by SIGN: the crossing lies between the two cases
+whose values have OPPOSITE signs. Never assert a crossing between two cases
+that share a sign - if base is already positive, the crossing is toward the
+downside, not the upside. Check the actual figures before writing this.
+
+Name the metric you mean. Equity value, enterprise value and NPV differ and
+can carry different signs in the same case; a claim about one is not a claim
+about another.
+
 When a base value is near zero, state movement in ABSOLUTE terms only.
 Percentage change from a near-zero base is arithmetically valid and practically
 meaningless - never write figures like "5,968% increase".` : ""}
