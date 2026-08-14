@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       benchmarkSnapshot,
       vendorClientId,
       name,
+      modelInputId,
     } = body
 
     // Validate required fields
@@ -53,6 +54,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert into model_inputs
+    // Update in place when editing an existing model
+    if (modelInputId) {
+      const { data: existing } = await supabase
+        .from("model_inputs").select("user_id").eq("id", modelInputId).single()
+      if (!existing || existing.user_id !== profile.id) {
+        return NextResponse.json({ error: "Not authorized" }, { status: 403 })
+      }
+      const { data: updated, error: updateError } = await supabase
+        .from("model_inputs")
+        .update({
+          model_type: modelType, goal_id: goalId ?? null,
+          status: "inputs_complete",
+          step1_business: step1, step2_revenue: step2,
+          step3_costs: step3, step4_funding: step4,
+          benchmark_snapshot: benchmarkSnapshot ?? {}, name: name ?? null,
+        })
+        .eq("id", modelInputId).select("id, status, created_at").single()
+      if (updateError) {
+        console.error("model_inputs update error:", updateError)
+        return NextResponse.json({ error: "Failed to update model inputs" }, { status: 500 })
+      }
+      await supabase.from("memos").delete().eq("model_input_id", modelInputId)
+      return NextResponse.json({
+        success: true, modelInputId: updated.id,
+        status: updated.status, createdAt: updated.created_at, updated: true,
+      })
+    }
+
     const { data: modelInput, error: insertError } = await supabase
       .from("model_inputs")
       .insert({

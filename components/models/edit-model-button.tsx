@@ -24,6 +24,7 @@ export function EditModelButton({ model }: EditModelButtonProps) {
 
   function handleClick() {
     loadFromModel({
+      modelId: model.id,
       goalId: model.goal_id ?? null,
       step1:  model.step1_business ?? null,
       step2:  model.step2_revenue ?? null,

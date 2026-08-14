@@ -13,9 +13,18 @@ import { Step5Review } from "./step5-review"
 import { Card, CardContent } from "@/components/ui/card"
 import { CitationInfoBanner } from "@/components/ui/citation-info-banner"
 
+const MODEL_TYPE_LABELS: Record<string, string> = {
+  dcf:             "DCF Valuation",
+  three_statement: "3-Statement Model",
+  pre_revenue_dcf: "Pre-Revenue DCF",
+  lbo:             "LBO Model",
+  saas:            "SaaS Model",
+  ma:              "M&A Model",
+}
+
 export function QuestionnaireWizard() {
   const router = useRouter()
-  const { currentStep, isStepComplete, setStep, data, selectedGoalId, resetQuestionnaire } =
+  const { currentStep, isStepComplete, setStep, data, selectedGoalId, editingModelId, resetQuestionnaire } =
     useQuestionnaireStore()
   const [mounted, setMounted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -37,6 +46,7 @@ export function QuestionnaireWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           entityType:        "startup",
+          modelInputId:      editingModelId,
           source:            "questionnaire",
           modelType:         data.step2.modelType,
           goalId:            selectedGoalId,
@@ -46,7 +56,7 @@ export function QuestionnaireWizard() {
           step4:             data.step4,
           benchmarkSnapshot: {},
           name:              data.step1.businessName
-            ? `${data.step1.businessName} — ${data.step2.modelType}`
+            ? `${data.step1.businessName} — ${MODEL_TYPE_LABELS[data.step2.modelType as string] ?? data.step2.modelType}`
             : null,
         }),
       })

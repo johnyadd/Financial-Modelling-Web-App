@@ -92,6 +92,7 @@ export default function MemoPage({ params }: MemoPageProps) {
         return
       }
       loadFromModel({
+        modelId: modelId,
         goalId: model.goal_id ?? null,
         step1:  model.step1_business ?? null,
         step2:  model.step2_revenue ?? null,
