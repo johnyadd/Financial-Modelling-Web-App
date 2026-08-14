@@ -69,6 +69,8 @@ export default function MemoPage({ params }: MemoPageProps) {
 
       if (data.memo) {
         setMemo(data.memo)
+        const bn = (data as { businessName?: string | null }).businessName
+        if (bn) setBusinessName(bn)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

@@ -183,6 +183,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         memo,
         audience: "investor",
+        businessName: (model.step1_business as Record<string, unknown>)?.businessName ?? null,
         cached: false,
         generatedAt: memo.generatedAt,
       })
