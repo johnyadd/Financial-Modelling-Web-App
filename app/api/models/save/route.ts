@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getUserSubscription, canCreateAnotherModel } from "@/lib/subscription"
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,6 +52,18 @@ export async function POST(request: NextRequest) {
         { error: "Missing required fields" },
         { status: 400 }
       )
+    }
+
+    // Enforce the model limit on creation only, never on edit
+    const subscription = await getUserSubscription()
+    if (subscription && subscription.tier === "free") {
+      const canCreate = await canCreateAnotherModel(subscription)
+      if (!canCreate) {
+        return NextResponse.json(
+          { error: "Model limit reached", detail: "Upgrade to create more models.", code: "MODEL_LIMIT" },
+          { status: 403 }
+        )
+      }
     }
 
     // Insert into model_inputs

@@ -1,30 +1,16 @@
-﻿import { QuestionnaireWizard } from "@/components/questionnaire/questionnaire-wizard"
-import { getUserSubscription, canCreateAnotherModel } from "@/lib/subscription"
-import { redirect } from "next/navigation"
+import { QuestionnaireWizard } from "@/components/questionnaire/questionnaire-wizard"
 
 export const metadata = {
   title: "Startup Financial Model Questionnaire | Finanyst",
   description: "Build your tailored startup financial model in minutes.",
 }
 
-export default async function QuestionnairePage() {
-  const subscription = await getUserSubscription()
-  if (subscription && subscription.tier === "free") {
-    const canCreate = await canCreateAnotherModel(subscription)
-    if (!canCreate) {
-      redirect("/pricing?reason=model_limit")
-    }
-  }
-
+// Model-limit enforcement lives in /api/models/save, on the insert branch only.
+// Checking here would block editing too, since the wizard serves both paths.
+export default function QuestionnairePage() {
   return (
     <main className="min-h-screen bg-background">
       <QuestionnaireWizard />
     </main>
   )
 }
-
-
-
-
-
-

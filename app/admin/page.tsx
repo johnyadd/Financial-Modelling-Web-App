@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -136,7 +136,7 @@ export default function AdminPage() {
           <MetricCard
             icon={<PoundSterlingIcon className="w-5 h-5" />}
             label="Monthly Recurring Revenue"
-            value={`Â£${metrics.mrr.toLocaleString()}`}
+            value={`£${metrics.mrr.toLocaleString()}`}
             sublabel="Live MRR"
             highlight
           />
@@ -172,28 +172,28 @@ export default function AdminPage() {
               <TierRow
                 label="Free"
                 count={metrics.tierBreakdown.free.count}
-                price="Â£0"
-                revenue="Â£0"
+                price="£0"
+                revenue="£0"
               />
               <TierRow
                 label="Founder"
                 count={metrics.tierBreakdown.founder.count}
-                price="Â£29/mo"
-                revenue={`Â£${metrics.tierBreakdown.founder.revenue.toLocaleString()}/mo`}
+                price="£29/mo"
+                revenue={`£${metrics.tierBreakdown.founder.revenue.toLocaleString()}/mo`}
                 color="blue"
               />
               <TierRow
                 label="Vendor Pro"
                 count={metrics.tierBreakdown.vendor_pro.count}
-                price="Â£99/mo"
-                revenue={`Â£${metrics.tierBreakdown.vendor_pro.revenue.toLocaleString()}/mo`}
+                price="£99/mo"
+                revenue={`£${metrics.tierBreakdown.vendor_pro.revenue.toLocaleString()}/mo`}
                 color="coral"
               />
               <TierRow
                 label="Enterprise"
                 count={metrics.tierBreakdown.enterprise.count}
                 price="Custom"
-                revenue={`Â£${metrics.tierBreakdown.enterprise.revenue.toLocaleString()}/mo`}
+                revenue={`£${metrics.tierBreakdown.enterprise.revenue.toLocaleString()}/mo`}
                 color="purple"
               />
             </div>

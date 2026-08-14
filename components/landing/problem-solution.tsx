@@ -1,4 +1,4 @@
-﻿import { XIcon, CheckIcon, ClockIcon, AlertTriangleIcon, DollarSignIcon } from "lucide-react"
+import { XIcon, CheckIcon, ClockIcon, AlertTriangleIcon, DollarSignIcon } from "lucide-react"
 
 export function ProblemSolution() {
   return (
@@ -43,7 +43,7 @@ export function ProblemSolution() {
               <p className="font-semibold text-foreground">Expensive alternatives</p>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Consultancy fees for a proper deal model: Â£5,000-Â£20,000. Enterprise FP&A software (Anaplan, Vena): Â£50k+ annually.
+              Consultancy fees for a proper deal model: £5,000-£20,000. Enterprise FP&A software (Anaplan, Vena): £50k+ annually.
             </p>
           </div>
 
