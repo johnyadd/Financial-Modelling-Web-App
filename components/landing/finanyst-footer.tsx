@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 
@@ -92,7 +92,7 @@ export function FinanystFooter() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-border/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            Â© {currentYear} Finanyst. All rights reserved.
+            © {currentYear} Finanyst. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground italic">
             Institutional financial models. AI-powered.
