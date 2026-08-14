@@ -74,9 +74,9 @@ export function FinanystHero() {
             size="lg"
             variant="ghost"
             className="gap-2 px-6 h-12 text-base"
-            onClick={() => router.push("/pricing")}
+            onClick={() => router.push("/demo")}
           >
-            View pricing
+            See a sample memo
           </Button>
         </div>
 
