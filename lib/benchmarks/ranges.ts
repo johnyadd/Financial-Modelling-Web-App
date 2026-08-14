@@ -37,7 +37,7 @@ export function buildBenchmarkReferenceBlock(): string {
   for (const [key, range] of Object.entries(BENCHMARK_RANGES)) {
     const c = BENCHMARK_CITATIONS[key]
     if (!c) continue
-    const adj = c.confidenceTier === "medium" ? " [UK-adjusted from a non-UK source]" : ""
+    const adj = c.confidenceTier === "medium" ? " (UK-adjusted)" : ""
     lines.push(`- ${range} | Source: ${c.source} ${c.vintage}${adj}`)
   }
   return lines.join("\\n")

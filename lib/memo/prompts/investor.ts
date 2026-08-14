@@ -96,6 +96,17 @@ ${JSON.stringify(ctx.sensitivity, null, 2)}
 BENCHMARK REFERENCE (use these when making comparisons - always cite the named source in your output):
 ${buildBenchmarkReferenceBlock()}
 
+VALUATION FIELDS - these are distinct, do not conflate them:
+- equity_value is the headline valuation. Lead with it.
+- enterprise_value is equity value before financing adjustments.
+- npv is the present value of forecast cash flows EXCLUDING terminal value.
+  It is the most conservative figure and is normally negative for a
+  pre-revenue company. Never present it as "the valuation".
+- pv_terminal is the discounted terminal value; npv + pv_terminal =
+  enterprise_value.
+State the same figure consistently across every section. If you cite more
+than one, name each explicitly and say how they relate.
+
 Use ONLY the ranges above when stating a benchmark. Do not substitute figures
 from your own knowledge, even if you believe them more accurate. Quote the
 range verbatim and name its source in the "source" field of every
