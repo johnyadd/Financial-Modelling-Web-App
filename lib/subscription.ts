@@ -36,15 +36,26 @@ export async function getUserSubscription(): Promise<UserSubscription | null> {
     .maybeSingle()
 
   // Default to free tier if no subscription
-  const tier: Tier = (subscription?.status === "active" || subscription?.status === "trialing")
-    ? (subscription.tier as Tier)
-    : "free"
+  // A trial past its end date reads as free. Deliberately NOT applied to
+  // "active": a paying subscriber whose renewal webhook is delayed should
+  // not lose access, and Stripe is not wired up yet anyway.
+  const periodEnd = subscription?.current_period_end
+    ? new Date(subscription.current_period_end)
+    : null
+  const trialExpired =
+    subscription?.status === "trialing" && periodEnd !== null && periodEnd < new Date()
+
+  const hasAccess =
+    !trialExpired &&
+    (subscription?.status === "active" || subscription?.status === "trialing")
+
+  const tier: Tier = hasAccess ? (subscription.tier as Tier) : "free"
 
   const tierConfig = TIERS[tier]
 
   return {
     tier,
-    status: subscription?.status || "free",
+    status: trialExpired ? "expired" : (subscription?.status || "free"),
     currentPeriodEnd: subscription?.current_period_end || null,
     cancelAtPeriodEnd: subscription?.cancel_at_period_end || false,
     canExport: tierConfig.limits.canExport,
