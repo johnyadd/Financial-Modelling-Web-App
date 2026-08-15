@@ -1,4 +1,4 @@
-﻿import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { notFound, redirect } from "next/navigation"
 import { ModelDetail } from "@/components/models/model-detail"
 import { getUserSubscription } from "@/lib/subscription"
@@ -30,6 +30,7 @@ export default async function ModelPage({ params }: ModelPageProps) {
       step2_revenue,
       step3_costs,
       step4_funding,
+        scenarios,
       created_at,
       updated_at
     `)

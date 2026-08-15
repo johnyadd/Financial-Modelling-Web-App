@@ -10,6 +10,7 @@ import { GenerateButton } from "@/components/models/generate-button"
 import { ExportButton } from "@/components/models/export-button"
 import { MemoButton } from "@/components/memo/memo-button"
 import { EditModelButton } from "@/components/models/edit-model-button"
+import { ScenarioPanel } from "@/components/models/scenario-panel"
 import type { UserSubscription } from "@/lib/subscription"
 import {
   RevenueEbitdaChart,
@@ -310,6 +311,12 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
             <GenerateButton modelInputId={model.id} status={model.status} />
           </div>
         </div>
+
+        {isComplete && (
+          <div className="mb-6">
+            <ScenarioPanel model={model} />
+          </div>
+        )}
 
         {goal && (
           <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 mb-6 flex items-center gap-3">
