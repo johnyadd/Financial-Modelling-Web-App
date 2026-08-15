@@ -1,55 +1,41 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import Anthropic from "@anthropic-ai/sdk"
 import { buildInvestorMemoPrompt } from "@/lib/memo/prompts/investor"
 import { diffInputs, diffOutputs, formatBridgeForPrompt } from "@/lib/scenarios/bridge"
 import { SCENARIO_LABELS } from "@/lib/scenarios/types"
 import type { ScenarioSet } from "@/lib/scenarios/types"
-import type {
-  InvestorMemo,
-  MemoGenerateRequest,
-} from "@/lib/memo/types"
+import type { InvestorMemo, MemoGenerateRequest } from "@/lib/memo/types"
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(request: NextRequest) {
   try {
-    // -- Auth (matches ai-suggest pattern) ---------------------------------
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-    }
 
-    // -- Parse request -----------------------------------------------------
     const body = await request.json() as MemoGenerateRequest
     const { modelId, audience = "investor" } = body
-
     if (!modelId) {
-      return NextResponse.json(
-        { error: "modelId is required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "modelId is required" }, { status: 400 })
     }
-
-    // v1 supports investor only. Founder and advisor come in v2 and v3.
     if (audience !== "investor") {
       return NextResponse.json(
         {
-          error: `Audience '${audience}' not yet supported`,
-          detail: "v1 supports 'investor' only. 'founder' and 'advisor' are planned for v2 and v3.",
+          error: `Audience ${audience} not yet supported`,
+          detail: "v1 supports investor only. founder and advisor are planned for v2 and v3.",
         },
         { status: 400 }
       )
     }
 
-    // -- Load model input --------------------------------------------------
+    // Loaded before auth so a public model can be served with no session.
+    // RLS permits reading your own models or any model flagged is_public.
     const { data: model, error: modelError } = await supabase
       .from("model_inputs")
       .select("*")
       .eq("id", modelId)
       .single()
-
     if (modelError || !model) {
       return NextResponse.json(
         { error: "Model not found", detail: modelError?.message },
@@ -57,27 +43,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ownership check - model_inputs.user_id references profiles.id (not auth.users.id).
-    // Load the current user's profile so we compare against the right identity layer.
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("auth_user_id", user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return NextResponse.json(
-        { error: "Profile not found", detail: profileError?.message },
-        { status: 404 }
-      )
+    // Auth applies only to models that are not public. The demo reads a public
+    // model with no session; without this it cannot regenerate its own memo and
+    // stays broken until someone signed in visits the memo URL by hand.
+    const isPublic = model.is_public === true
+    if (!isPublic) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      }
+      // model_inputs.user_id references profiles.id, not auth.users.id.
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single()
+      if (profileError || !profile) {
+        return NextResponse.json(
+          { error: "Profile not found", detail: profileError?.message },
+          { status: 404 }
+        )
+      }
+      if (model.user_id && model.user_id !== profile.id) {
+        return NextResponse.json(
+          { error: "Not authorized to access this model" },
+          { status: 403 }
+        )
+      }
     }
 
-    if (model.user_id && model.user_id !== profile.id) {
-      return NextResponse.json(
-        { error: "Not authorized to access this model" },
-        { status: 403 }
-      )
-    }
+    // Writes go through the admin client: ownership is settled above, and an
+    // anonymous demo visitor has no session for RLS to match on.
+    const adminClient = createAdminClient()
 
     // -- Read-first: serve the stored memo unless regeneration was requested --
     const force = (body as { force?: boolean }).force === true
@@ -183,12 +180,12 @@ export async function POST(request: NextRequest) {
       }
 
       // -- Persist so subsequent views are instant and cost nothing --------
-      const { error: saveError } = await supabase
+      const { error: saveError } = await adminClient
         .from("memos")
         .upsert(
           {
             model_input_id: modelId,
-            user_id:        profile.id,
+            user_id:        model.user_id,
             audience,
             content:        memo,
             updated_at:     new Date().toISOString(),
