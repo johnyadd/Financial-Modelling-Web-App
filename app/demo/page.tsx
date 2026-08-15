@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { MemoViewer } from "@/components/memo/memo-viewer"
 import type { InvestorMemo } from "@/lib/memo/types"
 import { Button } from "@/components/ui/button"
+import { LeadCapture } from "@/components/marketing/lead-capture"
 import { ArrowRightIcon } from "lucide-react"
 
 const DEMO_MODEL_ID = "6327a94b-5763-45b9-8b0d-0519fa492214"
@@ -69,6 +70,10 @@ export default async function DemoPage() {
       </div>
 
       <MemoViewer memo={memo} businessName={businessName} />
+
+      <div className="max-w-3xl mx-auto px-6 pb-4">
+        <LeadCapture source="demo" />
+      </div>
 
       <div className="fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur">
         <div className="max-w-3xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-3">
