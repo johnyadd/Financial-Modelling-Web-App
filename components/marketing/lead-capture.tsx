@@ -25,6 +25,7 @@ export function LeadCapture({ source = "demo" }: LeadCaptureProps) {
   const [email, setEmail] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
 
   async function handleSubmit() {
     if (!EMAIL.test(email)) {
@@ -43,23 +44,33 @@ export function LeadCapture({ source = "demo" }: LeadCaptureProps) {
       if (insertError && !insertError.message.includes("duplicate")) {
         throw new Error(insertError.message)
       }
-      router.push("/benchmarks")
+      setDone(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
     }
   }
 
+  if (done) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/30 p-6">
+        <p className="text-sm flex items-center gap-2">
+          <CheckIcon className="w-4 h-4 text-emerald-600" />
+          Noted. You will hear from me when a benchmark changes.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-6 space-y-4">
       <div className="space-y-2">
         <h2 className="text-base font-semibold">
-          The 16 UK benchmarks behind every Finanyst memo
+          Tell me when these change
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Every range above is measured against a named source. Here they all are —
-          Beauhurst, ONS, the British Business Bank, the Bank of England, and where
-          we adjusted non-UK data, exactly how much and why.
+          Beauhurst publishes annually. ONS revises. When a range here moves, or
+          an adjustment changes, I will tell you what changed and why.
         </p>
       </div>
 
@@ -77,7 +88,7 @@ export function LeadCapture({ source = "demo" }: LeadCaptureProps) {
           {saving ? (
             <><LoaderIcon className="w-4 h-4 animate-spin" />Opening...</>
           ) : (
-            <>Show me the benchmarks<ArrowRightIcon className="w-4 h-4" /></>
+            <>Notify me<ArrowRightIcon className="w-4 h-4" /></>
           )}
         </Button>
       </div>
@@ -86,7 +97,7 @@ export function LeadCapture({ source = "demo" }: LeadCaptureProps) {
 
       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
         <CheckIcon className="w-3.5 h-3.5" />
-        No account needed. Opens straight away.
+        No account needed. Unsubscribe any time.
       </p>
     </div>
   )

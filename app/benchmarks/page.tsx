@@ -2,6 +2,7 @@ import Link from "next/link"
 import { BENCHMARK_RANGES } from "@/lib/benchmarks/ranges"
 import { BENCHMARK_CITATIONS } from "@/lib/benchmarks/citations"
 import { Button } from "@/components/ui/button"
+import { LeadCapture } from "@/components/marketing/lead-capture"
 import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react"
 
 export const metadata = {
@@ -67,6 +68,8 @@ export default function BenchmarksPage() {
             </div>
           ))}
         </div>
+
+        <LeadCapture source="benchmarks" />
 
         <div className="rounded-lg border border-border bg-muted/30 p-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
