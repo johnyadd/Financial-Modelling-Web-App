@@ -160,7 +160,11 @@ export async function POST(request: NextRequest) {
       .update({ status: "complete" }).eq("id", modelInputId)
 
     // New outputs invalidate any cached memo describing the old numbers.
-    await adminClient.from("memos").delete().eq("model_input_id", modelInputId)
+    // Public models keep their memo: /demo only reads cache, so deleting here
+    // leaves it showing "Demo unavailable" until someone regenerates by hand.
+    if (modelInput.is_public !== true) {
+      await adminClient.from("memos").delete().eq("model_input_id", modelInputId)
+    }
 
     return NextResponse.json({
       success: true,
