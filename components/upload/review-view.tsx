@@ -116,6 +116,15 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
   const [isPolling, setIsPolling] = useState(false)
   const [currentStatements, setCurrentStatements] = useState(statements)
   const [isApproving, setIsApproving] = useState(false)
+  const [entityIndex, setEntityIndex] = useState(0)
+
+  // Entities are lifted here from the per-statement card so the picker and
+  // handleApprove share one selection. Extraction maps entity 0 by default;
+  // approve re-maps when a different one is chosen.
+  const allEntities = currentStatements.flatMap((s) => {
+    const d = (s.extracted_data ?? {}) as Record<string, unknown>
+    return ((d.entities as { company_name?: string }[]) ?? [])
+  })
   const [error, setError] = useState<string | null>(null)
 
   const modelInputId = modelInput.id as string
@@ -159,7 +168,7 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
       const res = await fetch("/api/upload/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modelInputId }),
+        body: JSON.stringify({ modelInputId, entityIndex }),
       })
 
       const result = await res.json()
@@ -320,6 +329,36 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
               </Button>
             )}
           </div>
+
+            {allEntities.length > 1 && (
+              <div className="w-full rounded-lg border border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/10 p-4 mb-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">
+                    {allEntities.length} companies found in these documents
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    A model covers one company. Choose which to build from — the others
+                    stay in the extracted data and are not combined.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {allEntities.map((e, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setEntityIndex(i)}
+                      className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                        entityIndex === i
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      {e.company_name ?? `Company ${i + 1}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
           <Button
             onClick={handleApprove}
