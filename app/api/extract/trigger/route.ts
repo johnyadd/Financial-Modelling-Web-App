@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { mapEntityToSteps } from "@/lib/upload/map-entity"
+import type { ExtractedEntity } from "@/lib/upload/map-entity"
 import Anthropic from "@anthropic-ai/sdk"
 import ExcelJS from "exceljs"
 
@@ -128,43 +130,9 @@ export async function POST(request: NextRequest) {
         for (const e of ((d.entities as Ent[]) ?? [])) allEntities.push(e)
       }
 
-      // NEVER combine entities. Map the first; the review step lets the user switch.
-      const p = allEntities[0] ?? ({} as Ent)
-      const is = p.income_statement ?? {}; const bs = p.balance_sheet ?? {}; const cf = p.cash_flow ?? {}
-      const years = p.years ?? []; const li = Math.max(years.length - 1, 0)
-      const last = (a: unknown[]) => typeof a?.[li] === "number" ? a[li] as number : 0
-      const gr = (a: unknown[]) => {
-        if (!a || a.length < 2) return 0
-        const pv = Number(a[a.length - 2]); const cv = Number(a[a.length - 1])
-        if (!pv) return 0
-        // Cap at 100%: a one-off historical spike should not become a forecast.
-        return Math.max(Math.min(((cv - pv) / Math.abs(pv)) * 100, 100), -50)
-      }
-
-      const rev = (is.revenue as number[]) ?? []; const cogs = (is.cost_of_goods_sold as number[]) ?? []
-      const ebitda = (is.ebitda as number[]) ?? []
-
-      // Project forward from the last actual. The old code set all three years to
-      // the same historical figure while also writing non-zero growth rates, so the
-      // revenues and the growth assumptions contradicted each other.
-      const g1 = gr(rev); const g2 = g1 * 0.9; const g3 = g1 * 0.8
-      const base = last(rev)
-      const y1 = Math.round(base * (1 + g1 / 100))
-      const y2 = Math.round(y1 * (1 + g2 / 100))
-      const y3 = Math.round(y2 * (1 + g3 / 100))
-
-      // Model type follows what the document can actually support.
-      const modelType = coverage.has("three_statement") ? "three_statement"
-        : (Array.from(coverage)[0] ?? "three_statement")
-
-      await adminClient.from("model_inputs").update({
-        name: p.company_name ? `${p.company_name} \u2014 3-Statement Model` : null,
-        step1_business: { businessName: p.company_name ?? "", currency, industry: p.sector_hint ?? "", subSector: "", businessStage: "Established (Profitable)", country: "United Kingdom" },
-        step2_revenue:  { modelType, projectionYears: "5 years", revenueModel: "Product Sales", revenueEntryMode: "topLine", year1Revenue: y1, year2Revenue: y2, year3Revenue: y3, revenueGrowthY1: Math.round(g1 * 10) / 10, revenueGrowthY2: Math.round(g2 * 10) / 10, revenueGrowthY3: Math.round(g3 * 10) / 10 },
-        step3_costs:    { grossMargin: base > 0 ? Math.round((base - last(cogs)) / base * 1000) / 10 : 70, cogsPercent: base > 0 ? Math.round(last(cogs) / base * 1000) / 10 : 30, salariesTotal: Math.round(last((is.salaries as number[]) ?? (is.operating_expenses as number[]) ?? []) * ((is.salaries as number[])?.length ? 1 : 0.6)), ebitdaMarginY1: base > 0 ? Math.round(last(ebitda) / base * 1000) / 10 : 0, capexY1: Math.abs(last((cf.capex as number[]) ?? [])), depreciationPct: 25 },
-        step4_funding:  { fundingStage: "Established (Profitable)", currentCash: last((bs.cash as number[]) ?? []), totalFundingRaised: 0, discountRate: 15, terminalGrowthRate: 2.5, exitHorizonYears: "5 years", targetExitMultiple: 5 },
-        status: "draft",
-      }).eq("id", modelInputId)
+      // NEVER combine entities. Map the first; review lets the user switch.
+      const steps = mapEntityToSteps(allEntities[0] ?? ({} as ExtractedEntity), currency, Array.from(coverage))
+      await adminClient.from("model_inputs").update({ ...steps, status: "draft" }).eq("id", modelInputId)
     }
 
     return NextResponse.json({ success: true, extracted: extracted.length })
