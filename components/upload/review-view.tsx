@@ -42,6 +42,13 @@ interface EditableField {
   section: string
 }
 
+const MODEL_CHOICES = [
+  { key: "three_statement", label: "3-Statement Model", needs: "needs P&L, balance sheet and cash flow" },
+  { key: "dcf",             label: "DCF Valuation",     needs: "needs cash flow and capex" },
+  { key: "lbo",             label: "LBO Model",         needs: "needs a debt schedule" },
+  { key: "saas",            label: "SaaS Model",        needs: "needs customer or recurring-revenue metrics" },
+]
+
 function StatusBadge({ status }: { status: string }) {
   const config = {
     pending:    { label: "Pending",    cls: "text-muted-foreground border-border",          icon: <ClockIcon className="w-3 h-3" /> },
@@ -117,10 +124,22 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
   const [currentStatements, setCurrentStatements] = useState(statements)
   const [isApproving, setIsApproving] = useState(false)
   const [entityIndex, setEntityIndex] = useState(0)
+  const [modelType, setModelType] = useState("three_statement")
 
   // Entities are lifted here from the per-statement card so the picker and
   // handleApprove share one selection. Extraction maps entity 0 by default;
   // approve re-maps when a different one is chosen.
+  // data_coverage names which model types the documents genuinely support.
+  // M&A is excluded for now: it needs two entities with assigned acquirer and
+  // target roles, which is a different mapping than one chosen entity.
+  const coverage = Array.from(new Set(currentStatements.flatMap((s) => {
+    const d = (s.extracted_data ?? {}) as Record<string, unknown>
+    return ((d.data_coverage as string[]) ?? [])
+  }))).filter((c) => c !== "ma")
+
+  // Guard against submitting a type the documents cannot support.
+  const effectiveType = coverage.includes(modelType) ? modelType : (coverage[0] ?? "three_statement")
+
   const allEntities = currentStatements.flatMap((s) => {
     const d = (s.extracted_data ?? {}) as Record<string, unknown>
     return ((d.entities as { company_name?: string }[]) ?? [])
@@ -168,7 +187,7 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
       const res = await fetch("/api/upload/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modelInputId, entityIndex }),
+        body: JSON.stringify({ modelInputId, entityIndex, modelType: effectiveType }),
       })
 
       const result = await res.json()
@@ -359,6 +378,39 @@ export function ReviewView({ modelInput, statements }: ReviewViewProps) {
                 </div>
               </div>
             )}
+
+            <div className="w-full rounded-lg border border-border p-4 mb-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium">Model to build</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Based on what these documents contain. Greyed types need data that
+                  is not present in the files you uploaded.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {MODEL_CHOICES.map((m) => {
+                  const ok = coverage.length === 0 ? m.key === "three_statement" : coverage.includes(m.key)
+                  return (
+                    <button
+                      key={m.key}
+                      type="button"
+                      disabled={!ok}
+                      onClick={() => setModelType(m.key)}
+                      className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+                        !ok
+                          ? "border-border text-muted-foreground opacity-50 cursor-not-allowed"
+                          : effectiveType === m.key
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border hover:bg-muted"
+                      }`}
+                    >
+                      {m.label}
+                      {!ok && <span className="ml-1.5 text-xs">- {m.needs}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
           <Button
             onClick={handleApprove}

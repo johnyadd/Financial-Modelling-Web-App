@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: "Unauthorised" }, { status: 401 })
 
-    const { modelInputId, entityIndex } = await request.json()
+    const { modelInputId, entityIndex, modelType } = await request.json()
     if (!modelInputId) return NextResponse.json({ error: "modelInputId required" }, { status: 400 })
 
     const adminClient = createAdminClient()
@@ -50,7 +50,11 @@ export async function POST(request: NextRequest) {
 
     await adminClient
       .from("model_inputs")
-      .update({ status: "inputs_complete" })
+      // model_type is a top-level column the engine trigger reads to pick the
+      // output column; step2_revenue.modelType is separate. Both must agree.
+      .update(modelType
+        ? { status: "inputs_complete", model_type: modelType }
+        : { status: "inputs_complete" })
       .eq("id", modelInputId)
 
     return NextResponse.json({ success: true })
