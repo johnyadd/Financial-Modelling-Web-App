@@ -14,6 +14,20 @@ const COST_LEVERS = ["grossMargin", "cogsPercent", "marketingBudgetPct", "rdBudg
 // entries like "-" or "1." so typing is not blocked mid-keystroke.
 const NUMERIC = /^-?\d*\.?\d*$/
 
+// grossMargin and cogsPercent are the same number expressed two ways.
+// Editing them independently let a scenario set COGS 40% AND gross margin 45%,
+// which the engine computed into a case labelled "Upside" that was worse than
+// base — the memo then had to reason about a contradiction rather than a scenario.
+function withDerived(o: Overrides, key: string, value: string): Overrides {
+  const next = { ...o, [key]: value }
+  const n = Number(value)
+  if (value === "" || !Number.isFinite(n)) return next
+  const other = Math.round((100 - n) * 10) / 10
+  if (key === "grossMargin") next.cogsPercent = String(other)
+  if (key === "cogsPercent") next.grossMargin = String(other)
+  return next
+}
+
 type Overrides = Record<string, string>
 
 interface ScenarioPanelProps {
@@ -163,14 +177,14 @@ export function ScenarioPanel({ model }: ScenarioPanelProps) {
                 value={downside[f.key] ?? ""}
                 placeholder={f.baseValue}
                 inputMode="decimal"
-                onChange={(e) => { if (NUMERIC.test(e.target.value)) setDownside({ ...downside, [f.key]: e.target.value }) }}
+                onChange={(e) => { if (NUMERIC.test(e.target.value)) setDownside(withDerived(downside, f.key, e.target.value)) }}
                 className="h-8 text-sm text-right"
               />
               <Input
                 value={upside[f.key] ?? ""}
                 placeholder={f.baseValue}
                 inputMode="decimal"
-                onChange={(e) => { if (NUMERIC.test(e.target.value)) setUpside({ ...upside, [f.key]: e.target.value }) }}
+                onChange={(e) => { if (NUMERIC.test(e.target.value)) setUpside(withDerived(upside, f.key, e.target.value)) }}
                 className="h-8 text-sm text-right"
               />
             </div>
