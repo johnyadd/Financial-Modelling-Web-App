@@ -26,7 +26,8 @@ Return ONLY valid JSON with this structure:
       "debt_schedule": null,
       "saas_metrics": null,
       "valuation_inputs": null,
-      "sector_hint": null
+      "sector_hint": null,
+      "country": null
     }
   ],
   "data_coverage": [],
@@ -38,6 +39,8 @@ OPTIONAL SECTIONS - populate only when the document actually contains them, othe
 - saas_metrics: { "arr": [], "customers": [], "arpu": [], "monthly_churn_pct": [], "cac": [], "ltv": [] }
 - valuation_inputs: { "shares_outstanding": [], "share_price": null, "tax_rate_pct": null, "market_cap": null }
 - sector_hint: your best read of the industry, e.g. "Technology - SaaS", "Retail", "Manufacturing"
+- country: the country this entity operates in, inferred from the statements
+  (currency, registered office, accounting standard). Null if genuinely unclear.
 
 DATA COVERAGE: list which model types this document can genuinely support, from:
 ["three_statement", "dcf", "lbo", "ma", "saas"]
@@ -45,7 +48,13 @@ Include a type only if the required inputs are present. LBO needs a debt schedul
 SaaS needs customer or recurring-revenue metrics. M&A needs two or more entities.
 Do not list a type you cannot support - it is more useful to say what is missing.
 
-All monetary values in thousands. Return ONLY the JSON.`
+MONETARY SCALE: return every monetary figure as the ACTUAL amount in the stated
+currency, not in thousands or millions. Statements are often presented in
+thousands or millions - multiply out. Revenue of 416,161 shown "in millions"
+must be returned as 416161000000. Getting this wrong makes every figure
+downstream wrong by a factor of 1000 with nothing to flag it.
+
+Return ONLY the JSON.`
 
 async function fromText(text: string) {
   const r = await anthropic.messages.create({ model: "claude-sonnet-4-6", max_tokens: 16000, messages: [{ role: "user", content: `${PROMPT}\n\nDocument:\n${text}` }] })

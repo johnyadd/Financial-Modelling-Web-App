@@ -8,6 +8,7 @@
 export type ExtractedEntity = Record<string, Record<string, unknown[]>> & {
   company_name?: string
   sector_hint?: string
+  country?: string
   years?: string[]
 }
 
@@ -52,9 +53,21 @@ export function mapEntityToSteps(
     ? "three_statement"
     : (coverage[0] ?? "three_statement")
 
+  // Statements often omit lines that follow from ones they do include. Apple's
+  // filing had no operating_expenses and no ebitda, so payroll came through as
+  // zero — but gross profit minus EBIT is opex, and EBIT plus D&A is EBITDA.
+  const grossProfit = (is.gross_profit as number[]) ?? []
+  const ebitArr = (is.ebit as number[]) ?? []
+  const dna = (is.depreciation_amortisation as number[]) ?? []
+
   const salaries = (is.salaries as number[]) ?? []
   const opex = (is.operating_expenses as number[]) ?? []
-  const salaryTotal = salaries.length ? last(salaries) : Math.round(last(opex) * 0.6)
+  const opexLast = last(opex) || Math.max(last(grossProfit) - last(ebitArr), 0)
+  const ebitdaLast = last(ebitda) || (last(ebitArr) + last(dna))
+  // NOT salaries.length — extraction returns [null, null, null] for a line the
+  // statement omits, which has length 3, so the fallback never fired and payroll
+  // came through as zero. Test the VALUE, not whether the array exists.
+  const salaryTotal = last(salaries) || Math.round(opexLast * 0.6)
 
   return {
     name: ent.company_name ? ent.company_name + " \u2014 3-Statement Model" : null,
@@ -64,7 +77,8 @@ export function mapEntityToSteps(
       industry: ent.sector_hint ?? "",
       subSector: "",
       businessStage: "Established (Profitable)",
-      country: "United Kingdom",
+      // Never hardcode UK: the memo applies UK benchmarks unqualified when it is.
+      country: ent.country ?? "",
     },
     step2_revenue: {
       modelType,
@@ -80,7 +94,7 @@ export function mapEntityToSteps(
       grossMargin: base > 0 ? Math.round(((base - last(cogs)) / base) * 1000) / 10 : 70,
       cogsPercent: base > 0 ? Math.round((last(cogs) / base) * 1000) / 10 : 30,
       salariesTotal: salaryTotal,
-      ebitdaMarginY1: base > 0 ? Math.round((last(ebitda) / base) * 1000) / 10 : 0,
+      ebitdaMarginY1: base > 0 ? Math.round((ebitdaLast / base) * 1000) / 10 : 0,
       capexY1: Math.abs(last((cf.capex as number[]) ?? [])),
       depreciationPct: 25,
     },
