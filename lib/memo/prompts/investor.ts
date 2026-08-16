@@ -135,6 +135,15 @@ VALUATION FIELDS - these are distinct, do not conflate them:
 State the same figure consistently across every section. If you cite more
 than one, name each explicitly and say how they relate.
 
+${(ctx.step1.country ?? "United Kingdom") !== "United Kingdom" ? `
+GEOGRAPHY LIMIT — this business is in ${ctx.step1.country}, but every benchmark
+above is UK-derived. Do NOT present a UK range as if it applies here. For each
+benchmarkComparison row either omit it, or state in the benchmark field that the
+range is UK-derived and may not transfer to ${ctx.step1.country}. Say so plainly
+rather than burying it. An unmarked UK benchmark applied to another country is
+worse than no benchmark at all.
+` : ""}
+
 Use ONLY the ranges above when stating a benchmark. Do not substitute figures
 from your own knowledge, even if you believe them more accurate. Quote the
 range verbatim and name its source in the "source" field of every
