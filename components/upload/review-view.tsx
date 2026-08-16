@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -62,8 +62,12 @@ function ExtractedDataCard({ statement }: { statement: Statement }) {
   const data = statement.extracted_data as Record<string, Record<string, unknown[]>> | null
   if (!data) return null
 
-  const is = data.income_statement ?? {}
-  const years = ((data.years as unknown) as string[]) ?? []
+  // Figures moved under entities so multi-company documents are no longer summed.
+  const ents = (data.entities as unknown as Record<string, Record<string, unknown[]>>[]) ?? []
+  const ent = ents[0] ?? (data as Record<string, Record<string, unknown[]>>)
+  const is = ent.income_statement ?? {}
+  const years = ((ent.years as unknown) as string[]) ?? []
+  const entityNames = ents.map((e) => (e.company_name as unknown as string) ?? "Unnamed").filter(Boolean)
 
   const metrics = [
     { label: "Revenue",     values: is.revenue },
