@@ -11,6 +11,10 @@ import { BenchmarkInput } from "@/components/ui/benchmark-input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { FieldWarning } from "@/components/validation/field-warning"
+import { checkPercentBounds, checkSalarySanity, checkOpexVsRevenue } from "@/lib/validation/step3-checks"
+import { checkGrowthRateBounds, checkRevenueNegative } from "@/lib/validation/step2-checks"
+import { checkDiscountRate, checkTerminalGrowthRate, checkExitMultiple, checkInterestRate } from "@/lib/validation/step4-checks"
 import { cn } from "@/lib/utils"
 import {
   BriefcaseIcon, BuildingIcon, TrendingUpIcon, ReceiptIcon,
@@ -104,9 +108,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 // â”€â”€ Input helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function NumField({ control, name, label, placeholder, suffix, assumptionKey, aiContext, setValue }: {
+function NumField({ control, name, label, placeholder, suffix, assumptionKey, aiContext, setValue, warning }: {
   control: any; name: keyof FormData; label: string; placeholder?: string; suffix?: string;
   assumptionKey?: string; aiContext?: any; setValue?: (v: string | number) => void;
+  warning?: ReturnType<typeof checkPercentBounds>;
 }) {
   return (
     <FormField control={control} name={name} render={({ field }) => (
@@ -125,6 +130,7 @@ function NumField({ control, name, label, placeholder, suffix, assumptionKey, ai
           </div>
         </FormControl>
         <FormMessage />
+        {warning && <FieldWarning warning={warning} />}
       </FormItem>
     )} />
   )
@@ -191,6 +197,40 @@ export function VendorWizard({ profile }: VendorWizardProps) {
   })
 
   const values = form.watch()
+
+  // Vendor path had NO validation — this is why a client model accepted 900k
+  // payroll against 500 revenue in silence. Schema coerces to number, checks
+  // take strings, so String() everywhere. Total opex is salaries plus the
+  // three monthly lines annualised, not a single field.
+  const totalOpex =
+    (values.salariesTotal ?? 0) +
+    ((values.cloudInfraMonthly ?? 0) + (values.officeRentMonthly ?? 0) + (values.otherOpexMonthly ?? 0)) * 12
+  const salaryCtx = { employeeCount: String(values.headcount ?? ""), country: values.country }
+  const opexCtx = { year1Revenue: String(values.year1Revenue ?? "") }
+
+  const warnings = {
+    year1Revenue:       checkRevenueNegative(String(values.year1Revenue ?? ""), "Year 1"),
+    year2Revenue:       checkRevenueNegative(String(values.year2Revenue ?? ""), "Year 2"),
+    year3Revenue:       checkRevenueNegative(String(values.year3Revenue ?? ""), "Year 3"),
+    revenueGrowthY1:    checkGrowthRateBounds(String(values.revenueGrowthY1 ?? ""), 1 as Parameters<typeof checkGrowthRateBounds>[1]),
+    revenueGrowthY2:    checkGrowthRateBounds(String(values.revenueGrowthY2 ?? ""), 2 as Parameters<typeof checkGrowthRateBounds>[1]),
+    revenueGrowthY3:    checkGrowthRateBounds(String(values.revenueGrowthY3 ?? ""), 3 as Parameters<typeof checkGrowthRateBounds>[1]),
+    grossMargin:        checkPercentBounds(String(values.grossMargin ?? ""), "Gross margin"),
+    cogsPercent:        checkPercentBounds(String(values.cogsPercent ?? ""), "COGS"),
+    marketingBudgetPct: checkPercentBounds(String(values.marketingBudgetPct ?? ""), "Marketing budget"),
+    rdBudgetPct:        checkPercentBounds(String(values.rdBudgetPct ?? ""), "R&D budget"),
+    depreciationRate:   checkPercentBounds(String(values.depreciationRate ?? ""), "Depreciation"),
+    taxRate:            checkPercentBounds(String(values.taxRate ?? ""), "Tax rate"),
+    discountRate:       checkDiscountRate(String(values.discountRate ?? "")),
+    terminalGrowthRate: checkTerminalGrowthRate(String(values.terminalGrowthRate ?? "")),
+    targetExitMultiple: checkExitMultiple(String(values.targetExitMultiple ?? "")),
+    interestRate:       checkInterestRate(String(values.interestRate ?? "")),
+    // Salary sanity needs headcount and a UK country; opex ratio is the fallback
+    // and is what actually catches the 900k-on-500 case.
+    salariesTotal:
+      checkSalarySanity(String(values.salariesTotal ?? ""), salaryCtx) ??
+      checkOpexVsRevenue(String(totalOpex), opexCtx),
+  }
 
   async function onSubmit(data: FormData) {
     setIsSubmitting(true)
@@ -373,9 +413,9 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">EXPLICIT REVENUE BY YEAR ({currency} '000s)</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <NumField control={form.control} name="year1Revenue" label="Year 1 revenue" placeholder="500" />
-                    <NumField control={form.control} name="year2Revenue" label="Year 2 revenue" placeholder="750" />
-                    <NumField control={form.control} name="year3Revenue" label="Year 3 revenue" placeholder="1000" />
+                    <NumField control={form.control} name="year1Revenue" label="Year 1 revenue" placeholder="500" warning={warnings.year1Revenue} />
+                    <NumField control={form.control} name="year2Revenue" label="Year 2 revenue" placeholder="750" warning={warnings.year2Revenue} />
+                    <NumField control={form.control} name="year3Revenue" label="Year 3 revenue" placeholder="1000" warning={warnings.year3Revenue} />
                     <NumField control={form.control} name="year4Revenue" label="Year 4 revenue" placeholder="1300" />
                     <NumField control={form.control} name="year5Revenue" label="Year 5 revenue" placeholder="1600" />
                   </div>
@@ -385,7 +425,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">GROWTH RATES (% YoY â€” used for years beyond explicit inputs)</p>
                   <div className="grid grid-cols-3 gap-3">
-                    <NumField control={form.control} name="revenueGrowthY1" label="Y1 growth %" suffix="%"
+                    <NumField control={form.control} name="revenueGrowthY1" label="Y1 growth %" suffix="%" warning={warnings.revenueGrowthY1}
                       assumptionKey="revenueGrowthY1"
                       aiContext={{
                         industry: values.industry,
@@ -396,7 +436,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("revenueGrowthY1", Number(v))}
                     />
-                    <NumField control={form.control} name="revenueGrowthY2" label="Y2 growth %" suffix="%"
+                    <NumField control={form.control} name="revenueGrowthY2" label="Y2 growth %" suffix="%" warning={warnings.revenueGrowthY2}
                       assumptionKey="revenueGrowthY2"
                       aiContext={{
                         industry: values.industry,
@@ -406,7 +446,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("revenueGrowthY2", Number(v))}
                     />
-                    <NumField control={form.control} name="revenueGrowthY3" label="Y3+ growth %" suffix="%"
+                    <NumField control={form.control} name="revenueGrowthY3" label="Y3+ growth %" suffix="%" warning={warnings.revenueGrowthY3}
                       assumptionKey="revenueGrowthY3"
                       aiContext={{
                         industry: values.industry,
@@ -460,7 +500,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">MARGINS</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <NumField control={form.control} name="grossMargin" label="Gross margin %" suffix="%" placeholder="70"
+                    <NumField control={form.control} name="grossMargin" label="Gross margin %" suffix="%" placeholder="70" warning={warnings.grossMargin}
                       assumptionKey="grossMargin"
                       aiContext={{
                         industry: values.industry,
@@ -470,7 +510,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("grossMargin", Number(v))}
                     />
-                    <NumField control={form.control} name="cogsPercent" label="COGS %" suffix="%" placeholder="30"
+                    <NumField control={form.control} name="cogsPercent" label="COGS %" suffix="%" placeholder="30" warning={warnings.cogsPercent}
                       assumptionKey="cogsPercent"
                       aiContext={{
                         industry: values.industry,
@@ -507,7 +547,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                   <div className="grid grid-cols-2 gap-3">
                     <NumField control={form.control} name="headcount"     label="Total headcount (FTE)" placeholder="20" />
                     <NumField control={form.control} name="avgSalary"     label={`Avg salary (${currency})`} placeholder="45000" />
-                    <NumField control={form.control} name="salariesTotal" label={`Total payroll (${currency})`} placeholder="900000" />
+                    <NumField control={form.control} name="salariesTotal" label={`Total payroll (${currency})`} placeholder="900000" warning={warnings.salariesTotal} />
                   </div>
                 </div>
 
@@ -515,7 +555,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">OPERATING EXPENSES (% OF REVENUE)</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <NumField control={form.control} name="marketingBudgetPct" label="Sales & marketing %" suffix="%" placeholder="20"
+                    <NumField control={form.control} name="marketingBudgetPct" label="Sales & marketing %" suffix="%" placeholder="20" warning={warnings.marketingBudgetPct}
                       assumptionKey="marketingBudgetPct"
                       aiContext={{
                         industry: values.industry,
@@ -524,7 +564,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("marketingBudgetPct", Number(v))}
                     />
-                    <NumField control={form.control} name="rdBudgetPct" label="R&D %" suffix="%" placeholder="15"
+                    <NumField control={form.control} name="rdBudgetPct" label="R&D %" suffix="%" placeholder="15" warning={warnings.rdBudgetPct}
                       assumptionKey="rdBudgetPct"
                       aiContext={{
                         industry: values.industry,
@@ -551,7 +591,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                   <p className="text-xs font-medium text-muted-foreground mb-3">CAPEX & DEPRECIATION</p>
                   <div className="grid grid-cols-2 gap-3">
                     <NumField control={form.control} name="capexY1"          label={`CAPEX Year 1 (${currency})`} placeholder="50000" />
-                    <NumField control={form.control} name="depreciationRate"  label="Depreciation rate %" suffix="%" placeholder="25" />
+                    <NumField control={form.control} name="depreciationRate"  label="Depreciation rate %" suffix="%" placeholder="25" warning={warnings.depreciationRate} />
                   </div>
                 </div>
               </div>
@@ -576,7 +616,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                   <p className="text-xs font-medium text-muted-foreground mb-3">DEBT SCHEDULE</p>
                   <div className="grid grid-cols-2 gap-3">
                     <NumField control={form.control} name="totalDebt"     label={`Total debt (${currency})`} placeholder="200000" />
-                    <NumField control={form.control} name="interestRate"  label="Interest rate %" suffix="%" placeholder="8" />
+                    <NumField control={form.control} name="interestRate"  label="Interest rate %" suffix="%" placeholder="8" warning={warnings.interestRate} />
                   </div>
                 </div>
 
@@ -600,7 +640,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div>
                   <p className="text-xs font-medium text-muted-foreground mb-3">DCF ASSUMPTIONS</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <NumField control={form.control} name="discountRate" label="Discount rate / WACC %" suffix="%" placeholder="15"
+                    <NumField control={form.control} name="discountRate" label="Discount rate / WACC %" suffix="%" placeholder="15" warning={warnings.discountRate}
                       assumptionKey="discountRate"
                       aiContext={{
                         industry: values.industry,
@@ -610,7 +650,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("discountRate", Number(v))}
                     />
-                    <NumField control={form.control} name="terminalGrowthRate" label="Terminal growth rate %" suffix="%" placeholder="2.5"
+                    <NumField control={form.control} name="terminalGrowthRate" label="Terminal growth rate %" suffix="%" placeholder="2.5" warning={warnings.terminalGrowthRate}
                       assumptionKey="terminalGrowthRate"
                       aiContext={{
                         industry: values.industry,
@@ -618,7 +658,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       }}
                       setValue={(v) => form.setValue("terminalGrowthRate", Number(v))}
                     />
-                    <NumField control={form.control} name="taxRate" label="Corporation tax rate %" suffix="%" placeholder="19"
+                    <NumField control={form.control} name="taxRate" label="Corporation tax rate %" suffix="%" placeholder="19" warning={warnings.taxRate}
                       assumptionKey="taxRate"
                       aiContext={{
                         country: values.country,
@@ -645,7 +685,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                         ))}
                       </div>
                     </div>
-                    <NumField control={form.control} name="targetExitMultiple" label="Exit EV/Revenue multiple" suffix="x" placeholder="8"
+                    <NumField control={form.control} name="targetExitMultiple" label="Exit EV/Revenue multiple" suffix="x" placeholder="8" warning={warnings.targetExitMultiple}
                       assumptionKey="targetExitMultiple"
                       aiContext={{
                         industry: values.industry,
@@ -665,7 +705,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                       <p className="text-xs font-medium text-muted-foreground mb-3">LBO SPECIFIC</p>
                       <div className="grid grid-cols-2 gap-3">
                         <NumField control={form.control} name="totalDebt"    label={`Acquisition debt (${currency})`} placeholder="5000000" />
-                        <NumField control={form.control} name="interestRate" label="Debt interest rate %" suffix="%" placeholder="8" />
+                        <NumField control={form.control} name="interestRate" label="Debt interest rate %" suffix="%" placeholder="8" warning={warnings.interestRate} />
                       </div>
                     </div>
                   </>
