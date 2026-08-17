@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -50,6 +50,8 @@ const schema = z.object({
   country:         z.string().default("United Kingdom"),
   currency:        z.string().default("GBP"),
   reportingPeriod: z.string().optional(),
+  businessStage:   z.string().default("Established (Profitable)"),
+  subSector:       z.string().optional(),
   analystName:     z.string().optional(),
   modelNotes:      z.string().optional(),
   // Model type
@@ -201,7 +203,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
         name: `${data.clientName} â€” ${MODEL_OPTIONS.find(m => m.value === data.modelType)?.label ?? data.modelType}`,
         step1: {
           businessName: data.clientName, industry: data.industry, currency: data.currency,
-          country: data.country, businessStage: "Established (Profitable)",
+          country: data.country, businessStage: data.businessStage, subSector: data.subSector ?? "",
         },
         step2: {
           revenueModel: data.revenueModel, projectionYears: `${data.projectionYears} years`,
@@ -218,7 +220,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
           marketingBudgetPct: data.marketingBudgetPct, rdBudgetPct: data.rdBudgetPct,
           cloudInfraMonthly: data.cloudInfraMonthly, officeRentMonthly: data.officeRentMonthly,
           otherOpexMonthly: data.otherOpexMonthly, capexY1: data.capexY1,
-          depreciationRate: data.depreciationRate, ebitdaMarginY1: data.ebitdaMarginY1,
+          depreciationPct: data.depreciationRate, ebitdaMarginY1: data.ebitdaMarginY1,
           ebitdaMarginY3: data.ebitdaMarginY3,
         },
         step4: {
@@ -229,6 +231,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
           targetExitMultiple: data.targetExitMultiple, taxRate: data.taxRate,
           accountsReceivableDays: data.accountsReceivableDays,
           accountsPayableDays: data.accountsPayableDays,
+            inventoryDays: data.inventoryDays,
         },
       }
 
@@ -293,6 +296,16 @@ export function VendorWizard({ profile }: VendorWizardProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <TextField control={form.control} name="clientName" label="Client / company name *" placeholder="Acme Ltd" />
                   <SelectField control={form.control} name="industry" label="Industry *" options={INDUSTRIES} />
+                    <SelectField control={form.control} name="businessStage" label="Stage" options={FUNDING_STAGES} />
+                    <FormField control={form.control} name="subSector" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Sub-sector</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. B2B SaaS, Insurance broking" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                   <TextField control={form.control} name="country" label="Country" placeholder="United Kingdom" />
                   <SelectField control={form.control} name="currency" label="Currency" options={CURRENCIES} />
                   <TextField control={form.control} name="reportingPeriod" label="Reporting period" placeholder="FY2024 or Jan-Dec 2024" />
