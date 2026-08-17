@@ -240,6 +240,7 @@ export function VendorWizard({ profile }: VendorWizardProps) {
         entity_type: "existing_business",
         source: "vendor",
         modelType: data.modelType,
+            revenueEntryMode: "topLine",
         name: `${data.clientName} â€” ${MODEL_OPTIONS.find(m => m.value === data.modelType)?.label ?? data.modelType}`,
         step1: {
           businessName: data.clientName, industry: data.industry, currency: data.currency,

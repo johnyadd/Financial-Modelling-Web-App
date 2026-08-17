@@ -36,6 +36,19 @@ const initialData: QuestionnaireData = {
   step4: {},
 }
 
+// The questionnaire stores every field as a string, but the vendor wizard uses
+// z.coerce.number() and mapEntityToSteps writes numbers too — so editing a
+// vendor-created or uploaded model failed Zod with "expected string, received
+// number". Normalise at the boundary rather than loosening the schema.
+function stringifyValues(o?: Record<string, unknown> | null): Record<string, unknown> {
+  if (!o) return {}
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(o)) {
+    out[k] = typeof v === "number" ? String(v) : v
+  }
+  return out
+}
+
 export const useQuestionnaireStore = create<QuestionnaireStore>()(
   persist(
     (set, get) => ({
@@ -75,10 +88,10 @@ export const useQuestionnaireStore = create<QuestionnaireStore>()(
           selectedGoalId: payload.goalId ?? null,
           editingModelId: payload.modelId ?? null,
           data: {
-            step1: (payload.step1 ?? {}) as Partial<Step1Data>,
-            step2: (payload.step2 ?? {}) as Partial<Step2Data>,
-            step3: (payload.step3 ?? {}) as Partial<Step3Data>,
-            step4: (payload.step4 ?? {}) as Partial<Step4Data>,
+            step1: stringifyValues(payload.step1) as Partial<Step1Data>,
+            step2: stringifyValues(payload.step2) as Partial<Step2Data>,
+            step3: stringifyValues(payload.step3) as Partial<Step3Data>,
+            step4: stringifyValues(payload.step4) as Partial<Step4Data>,
           },
         }),
 
