@@ -95,3 +95,36 @@ export function checkRevenueNegative(value: string, yearLabel: string): FieldWar
 
   return null
 }
+
+/**
+ * Revenue and growth rates are entered independently in top-line mode, so they
+ * can contradict each other — a real model had 150k flat across three years
+ * alongside stated growth of 30/22/15%. Whichever the engine uses, the other is
+ * wrong, and the memo quotes both as though they agree.
+ *
+ * Only Y2 and Y3 are checkable: Y1 growth references a prior period that is not
+ * a field in top-line mode. The driver-mode compute derives Y2 and Y3 only for
+ * the same reason.
+ */
+export function checkGrowthConsistency(
+  priorRevenue: string,
+  currentRevenue: string,
+  statedGrowth: string,
+  yearLabel: string
+): FieldWarning | null {
+  const prior = parseFloat(priorRevenue)
+  const current = parseFloat(currentRevenue)
+  const stated = parseFloat(statedGrowth)
+  if (!isFinite(prior) || !isFinite(current) || !isFinite(stated)) return null
+  if (prior <= 0) return null
+
+  const implied = ((current - prior) / prior) * 100
+  if (Math.abs(implied - stated) <= 1) return null
+
+  const impliedStr = implied.toFixed(implied % 1 === 0 ? 0 : 1)
+  return {
+    severity: "warning",
+    message: `${yearLabel} revenue implies ${impliedStr}% growth, but the stated rate is ${stated}%.`,
+    suggestion: `Update one to match the other — at ${stated}% the figure would be ${Math.round(prior * (1 + stated / 100)).toLocaleString()}.`,
+  }
+}

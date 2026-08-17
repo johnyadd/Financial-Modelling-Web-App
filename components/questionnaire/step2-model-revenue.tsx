@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeftIcon, ArrowRightIcon, TrendingUpIcon, SparklesIcon } from "lucide-react"
 import { FormErrorSummary } from "@/components/validation/form-error-summary"
 import { FieldWarning } from "@/components/validation/field-warning"
-import { checkGrowthRateBounds, checkRevenueNegative } from "@/lib/validation/step2-checks"
+import { checkGrowthRateBounds, checkGrowthConsistency, checkRevenueNegative } from "@/lib/validation/step2-checks"
 
 // Sub-types that have driver UI blocks built — all 27 sub-types as of Session 3c
 const BUILT_SUB_TYPES = [
@@ -253,8 +253,10 @@ export function Step2ModelRevenue() {
 
   const warnings = {
     year1Revenue:    checkRevenueNegative(watchedYear1Revenue ?? "", "Year 1"),
-    year2Revenue:    checkRevenueNegative(watchedYear2Revenue ?? "", "Year 2"),
-    year3Revenue:    checkRevenueNegative(watchedYear3Revenue ?? "", "Year 3"),
+      year2Revenue:    checkRevenueNegative(watchedYear2Revenue ?? "", "Year 2")
+        ?? checkGrowthConsistency(watchedYear1Revenue ?? "", watchedYear2Revenue ?? "", watchedGrowthY2 ?? "", "Year 2"),
+      year3Revenue:    checkRevenueNegative(watchedYear3Revenue ?? "", "Year 3")
+        ?? checkGrowthConsistency(watchedYear2Revenue ?? "", watchedYear3Revenue ?? "", watchedGrowthY3 ?? "", "Year 3"),
     revenueGrowthY1: checkGrowthRateBounds(watchedGrowthY1 ?? "", 1),
     revenueGrowthY2: checkGrowthRateBounds(watchedGrowthY2 ?? "", 2),
     revenueGrowthY3: checkGrowthRateBounds(watchedGrowthY3 ?? "", 3),
