@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Building2Icon, ArrowRightIcon, RotateCcwIcon } from "lucide-react"
+import { FormErrorSummary } from "@/components/validation/form-error-summary"
 
 export function Step1BusinessInfo() {
   const { data, updateStep1, nextStep, resetQuestionnaire } = useQuestionnaireStore()
@@ -311,6 +312,8 @@ export function Step1BusinessInfo() {
             </FormItem>
           )}
         />
+
+        <FormErrorSummary errors={form.formState.errors} />
 
         <div className="flex justify-end pt-2">
           <Button type="submit" className="gap-2">

@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeftIcon, ArrowRightIcon, TrendingUpIcon, SparklesIcon } from "lucide-react"
+import { FormErrorSummary } from "@/components/validation/form-error-summary"
 import { FieldWarning } from "@/components/validation/field-warning"
 import { checkGrowthRateBounds, checkRevenueNegative } from "@/lib/validation/step2-checks"
 
@@ -1109,6 +1110,8 @@ export function Step2ModelRevenue() {
             </FormItem>
           )}
         />
+
+        <FormErrorSummary errors={form.formState.errors} />
 
         <div className="flex justify-between pt-2">
           <Button type="button" variant="outline" onClick={prevStep} className="gap-2">

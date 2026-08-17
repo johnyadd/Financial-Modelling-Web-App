@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeftIcon, ArrowRightIcon, ReceiptIcon } from "lucide-react"
+import { FormErrorSummary } from "@/components/validation/form-error-summary"
 import { FieldWarning } from "@/components/validation/field-warning"
 import { checkPercentBounds, checkSalarySanity, checkOpexVsRevenue } from "@/lib/validation/step3-checks"
 
@@ -475,6 +476,8 @@ export function Step3CostsMargins() {
         </div>
 
         {/* nav */}
+        <FormErrorSummary errors={form.formState.errors} />
+
         <div className="flex justify-between pt-2">
           <Button type="button" variant="outline" onClick={prevStep} className="gap-2">
             <ArrowLeftIcon className="w-4 h-4" /> Back
