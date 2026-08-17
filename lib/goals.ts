@@ -1,6 +1,6 @@
-﻿// ============================================================
-// Finanyst â€” Goal-Driven Path
-// Maps business goals â†’ recommended model types
+// ============================================================
+// Finanyst — Goal-Driven Path
+// Maps business goals → recommended model types
 // Used in the goal selection screen (Step 0) for
 // non-financial / startup users
 // ============================================================
@@ -19,7 +19,7 @@ export type BusinessGoal = {
 export const BUSINESS_GOALS: BusinessGoal[] = [
   {
     id: "raise_investment",
-    icon: "ðŸ’°",
+    icon: "💰",
     title: "Raise investment or funding",
     description:
       "I need a financial model to present to investors, a bank, or an accelerator to secure funding for my business.",
@@ -35,10 +35,10 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "validate_idea",
-    icon: "ðŸ”",
+    icon: "🔍",
     title: "Validate my business idea",
     description:
-      "I want to know if my idea is financially viable â€” can it make money, and what does the path to profitability look like?",
+      "I want to know if my idea is financially viable — can it make money, and what does the path to profitability look like?",
     whoItSuits: "Early-stage founders testing assumptions before committing resources",
     recommendedModels: ["Pre-revenue Startup DCF", "SaaS Financial Model"],
     primaryModel: "pre_revenue_dcf",
@@ -51,7 +51,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "plan_first_year",
-    icon: "ðŸ“…",
+    icon: "📅",
     title: "Plan my first year of operations",
     description:
       "I'm launching soon and need a detailed financial plan covering costs, cash flow and hiring for Year 1.",
@@ -67,11 +67,11 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "plan_growth",
-    icon: "ðŸ“ˆ",
+    icon: "📈",
     title: "Plan and model my growth",
     description:
       "My business is generating revenue and I want to model different growth scenarios to guide hiring and investment decisions.",
-    whoItSuits: "Early-revenue founders planning their next 3â€“5 years of growth",
+    whoItSuits: "Early-revenue founders planning their next 3–5 years of growth",
     recommendedModels: ["3-Statement Financial Model", "DCF Valuation Model"],
     primaryModel: "three_statement",
     questionnaireFocus: [
@@ -83,7 +83,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "prepare_exit",
-    icon: "ðŸšª",
+    icon: "🚪",
     title: "Prepare for an exit or acquisition",
     description:
       "I'm considering selling my business or being acquired and need a valuation model to understand what it's worth.",
@@ -99,7 +99,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "pitch_to_bank",
-    icon: "ðŸ¦",
+    icon: "🏦",
     title: "Apply for a business loan",
     description:
       "I need a financial model to support a bank loan or government grant application showing repayment capacity.",
@@ -115,7 +115,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "understand_unit_economics",
-    icon: "ðŸ”¢",
+    icon: "🔢",
     title: "Understand my unit economics",
     description:
       "I want to understand my CAC, LTV, payback period and whether my business model is fundamentally sound.",
@@ -131,7 +131,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
   {
     id: "board_reporting",
-    icon: "ðŸ“Š",
+    icon: "📊",
     title: "Build a board or investor report",
     description:
       "I need a professional financial model and dashboard to present to my board, co-founders or existing investors.",
@@ -147,7 +147,7 @@ export const BUSINESS_GOALS: BusinessGoal[] = [
   },
 ]
 
-// Maps goal id â†’ model type value used in the questionnaire
+// Maps goal id → model type value used in the questionnaire
 export const GOAL_TO_MODEL_TYPE: Record<string, string> = {
   raise_investment:        "pre_revenue_dcf",
   validate_idea:           "pre_revenue_dcf",
@@ -159,7 +159,7 @@ export const GOAL_TO_MODEL_TYPE: Record<string, string> = {
   board_reporting:         "three_statement",
 }
 
-// Maps goal id â†’ which questionnaire sections to emphasise
+// Maps goal id → which questionnaire sections to emphasise
 export const GOAL_EMPHASIS: Record<string, string[]> = {
   raise_investment:        ["revenue", "funding", "valuation", "unitEconomics"],
   validate_idea:           ["revenue", "costs", "unitEconomics"],
