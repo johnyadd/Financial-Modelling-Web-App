@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import Anthropic from "@anthropic-ai/sdk"
 import { buildInvestorMemoPrompt } from "@/lib/memo/prompts/investor"
+import { buildBoardPackPrompt } from "@/lib/memo/prompts/board"
+import { compareToPlan, formatVarianceForPrompt } from "@/lib/actuals/compare"
+import type { ActualPeriod } from "@/lib/actuals/compare"
 import { diffInputs, diffOutputs, formatBridgeForPrompt } from "@/lib/scenarios/bridge"
 import { SCENARIO_LABELS } from "@/lib/scenarios/types"
 import type { ScenarioSet } from "@/lib/scenarios/types"
@@ -19,11 +22,11 @@ export async function POST(request: NextRequest) {
     if (!modelId) {
       return NextResponse.json({ error: "modelId is required" }, { status: 400 })
     }
-    if (audience !== "investor") {
+    if (audience !== "investor" && audience !== "board") {
       return NextResponse.json(
         {
           error: `Audience ${audience} not yet supported`,
-          detail: "v1 supports investor only. founder and advisor are planned for v2 and v3.",
+          detail: "Supported: investor, board. founder and advisor are planned.",
         },
         { status: 400 }
       )
@@ -152,7 +155,33 @@ export async function POST(request: NextRequest) {
       if (blocks.length > 0) scenarioBridge = blocks.join("\n\n")
     }
 
-    const prompt = buildInvestorMemoPrompt({
+    // Board pack: year-to-date actuals against pro-rata plan. Falls back to a
+    // plan-only pack when no periods have been entered.
+    let varianceBlock: string | null = null
+    let periodLabel: string | null = null
+    if (audience === "board") {
+      const { data: periods } = await supabase
+        .from("actual_periods")
+        .select("period_label, plan_year, periods_elapsed, period_type, income_statement, balance_sheet, cash_flow")
+        .eq("model_input_id", modelId)
+        .order("period_label", { ascending: true })
+      const actuals = (periods ?? []) as unknown as ActualPeriod[]
+      if (actuals.length > 0) {
+        const planYear1 = (pnl?.[0] ?? {}) as Record<string, unknown>
+        const rows = compareToPlan(actuals, planYear1, actuals[0].period_type === "quarter" ? 4 : 12)
+        const elapsed = Math.max(...actuals.map((a) => a.periods_elapsed))
+        const unit = actuals[0].period_type === "quarter" ? "quarters" : "months"
+        periodLabel = `${elapsed} ${unit} to ${actuals[actuals.length - 1].period_label}`
+        varianceBlock = formatVarianceForPrompt(rows, periodLabel)
+      }
+    }
+
+    const prompt = audience === "board"
+      ? buildBoardPackPrompt({
+          step1, step2, step3, step4, modelType,
+          summary, pnl, cashFlow, varianceBlock, periodLabel,
+        })
+      : buildInvestorMemoPrompt({
       scenarioBridge,
       step1, step2, step3, step4,
       modelType,
@@ -199,7 +228,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         memo,
-        audience: "investor",
+        audience,
         businessName: (model.step1_business as Record<string, unknown>)?.businessName ?? null,
         cached: false,
         generatedAt: memo.generatedAt,

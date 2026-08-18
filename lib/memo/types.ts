@@ -1,7 +1,7 @@
 // Types for the memo generator system
 // v1 supports investor audience only. Founder and advisor audiences come in v2 and v3.
 
-export type MemoAudience = "investor" | "founder" | "advisor"
+export type MemoAudience = "investor" | "board" | "founder" | "advisor"
 
 export interface InvestorMemo {
   executiveSummary: {
