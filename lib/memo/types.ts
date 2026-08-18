@@ -116,3 +116,51 @@ export interface ScenarioComparison {
   narrative: string
   cases: ScenarioCaseSummary[]
 }
+
+// ── Board pack ──────────────────────────────────────────────────────────
+// Second memo audience. Answers "how are we doing and what needs deciding",
+// where the investor memo answers "is this worth backing".
+
+export interface BoardVarianceRow {
+  metric: string
+  actual: string
+  plan: string
+  variance: string
+  /** "Ahead", "Behind" or "In line" — direction already interpreted. */
+  status: string
+  /** Why it moved. One sentence, specific, no filler. */
+  commentary: string
+}
+
+export interface BoardDecision {
+  decision: string
+  context: string
+  /** What happens if the board does nothing this cycle. */
+  ifDeferred: string
+}
+
+export interface BoardWatchItem {
+  item: string
+  detail: string
+}
+
+export interface BoardPack {
+  /** One paragraph a chair could read aloud to open the meeting. */
+  headline: string
+  periodLabel: string
+  /** True when no actuals exist and this is a plan-only pack. */
+  planOnly: boolean
+  performance: {
+    narrative: string
+    rows: BoardVarianceRow[]
+  }
+  cashPosition: {
+    closingCash: string
+    runway: string
+    narrative: string
+  }
+  watchItems: BoardWatchItem[]
+  decisions: BoardDecision[]
+  generatedAt: string
+  modelId: string
+}
