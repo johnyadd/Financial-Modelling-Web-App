@@ -12,6 +12,7 @@ import { MemoButton } from "@/components/memo/memo-button"
 import { BoardPackButton } from "@/components/memo/board-pack-button"
 import { EditModelButton } from "@/components/models/edit-model-button"
 import { ScenarioPanel } from "@/components/models/scenario-panel"
+import { ActualsPanel } from "@/components/actuals/actuals-panel"
 import type { UserSubscription } from "@/lib/subscription"
 import {
   RevenueEbitdaChart,
@@ -317,6 +318,12 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
         {isComplete && (
           <div className="mb-6">
             <ScenarioPanel model={model} />
+          </div>
+        )}
+
+        {isComplete && (
+          <div className="mb-6">
+            <ActualsPanel modelInputId={model.id} currency={currency} />
           </div>
         )}
 
