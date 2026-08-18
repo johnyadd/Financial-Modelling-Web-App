@@ -9,6 +9,7 @@ import { BUSINESS_GOALS } from "@/lib/goals"
 import { GenerateButton } from "@/components/models/generate-button"
 import { ExportButton } from "@/components/models/export-button"
 import { MemoButton } from "@/components/memo/memo-button"
+import { BoardPackButton } from "@/components/memo/board-pack-button"
 import { EditModelButton } from "@/components/models/edit-model-button"
 import { ScenarioPanel } from "@/components/models/scenario-panel"
 import type { UserSubscription } from "@/lib/subscription"
@@ -307,6 +308,7 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
               />
             )}
             {isComplete && <MemoButton modelInputId={model.id} />}
+            {isComplete && <BoardPackButton modelInputId={model.id} />}
             <EditModelButton model={model} />
             <GenerateButton modelInputId={model.id} status={model.status} />
           </div>
