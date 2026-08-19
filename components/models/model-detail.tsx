@@ -13,6 +13,7 @@ import { BoardPackButton } from "@/components/memo/board-pack-button"
 import { EditModelButton } from "@/components/models/edit-model-button"
 import { ScenarioPanel } from "@/components/models/scenario-panel"
 import { ActualsPanel } from "@/components/actuals/actuals-panel"
+import { KpiDashboard } from "@/components/models/kpi-dashboard"
 import type { UserSubscription } from "@/lib/subscription"
 import {
   RevenueEbitdaChart,
@@ -341,6 +342,16 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
         {/* results */}
         {hasResults && (
           <div className="space-y-8 mb-8">
+
+            {/* actual vs plan — variance tiles when actuals exist */}
+            <div className="mb-6">
+              <KpiDashboard
+                modelInputId={model.id}
+                currency={currency}
+                summary={summary}
+                planYear1={(pnl?.[0] ?? {}) as Record<string, unknown>}
+              />
+            </div>
 
             {/* key metrics */}
             <div>
