@@ -67,6 +67,7 @@ interface ModelDetailProps {
 function fmt(val: unknown, currency = "GBP"): string {
   const n = parseFloat(String(val))
   if (isNaN(n)) return "—"
+  if (Math.abs(n) >= 1_000_000_000) return `${currency} ${(n / 1_000_000_000).toFixed(2)}bn`
   if (Math.abs(n) >= 1_000_000) return `${currency} ${(n / 1_000_000).toFixed(2)}m`
   if (Math.abs(n) >= 1_000) return `${currency} ${(n / 1_000).toFixed(1)}k`
   return `${currency} ${n.toFixed(0)}`

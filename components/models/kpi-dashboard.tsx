@@ -95,7 +95,7 @@ export function KpiDashboard({ modelInputId, currency, summary, planYear1 }: Kpi
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-sm font-semibold">Key metrics</h3>
+        <h3 className="text-sm font-semibold">Performance</h3>
         <span className="text-xs text-muted-foreground">
           {hasActuals ? `Actual vs plan - ${periodLabel}` : "Plan only - add a reporting period to compare"}
         </span>
@@ -111,10 +111,14 @@ export function KpiDashboard({ modelInputId, currency, summary, planYear1 }: Kpi
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Tile label="Closing cash (final year)" value={fmt(summary.closing_cash, currency)} />
+        {summary.runway_months != null && (
         <Tile label="Runway" value={summary.runway_months ? `${summary.runway_months} months` : "-"}
           sub={summary.post_raise_runway ? `${summary.post_raise_runway} post-raise` : undefined} />
-        <Tile label="Final EBITDA margin" value={pct(summary.final_ebitda_margin)} />
-        <Tile label="Final year revenue" value={fmt(summary.final_year_revenue, currency)} />
+        )}
+        {summary.final_ebitda_margin != null && <Tile label="Final EBITDA margin" value={pct(summary.final_ebitda_margin)} />}
+        {summary.revenue_cagr != null && <Tile label="Revenue CAGR" value={pct(summary.revenue_cagr)} />}
+        {summary.final_year_revenue != null && <Tile label="Final year revenue" value={fmt(summary.final_year_revenue, currency)} />}
+        {summary.equity_value != null && <Tile label="Equity value" value={fmt(summary.equity_value, currency)} />}
       </div>
     </div>
   )

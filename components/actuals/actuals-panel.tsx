@@ -179,7 +179,7 @@ export function ActualsPanel({ modelInputId, currency = "GBP" }: { modelInputId:
           {LINES.map((l) => (
             <div key={l.key}>
               <label className="text-xs text-muted-foreground">{l.label} ({currency})</label>
-              <Input value={values[l.key] ?? ""} inputMode="decimal" placeholder="0"
+              <Input value={values[l.key] ?? ""} inputMode="decimal" placeholder="—"
                 onChange={(e) => { if (NUMERIC.test(e.target.value)) setValues({ ...values, [l.key]: e.target.value }) }}
                 className="h-9" />
             </div>

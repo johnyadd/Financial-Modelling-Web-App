@@ -66,10 +66,26 @@ export function compareToPlan(
   const elapsed = Math.max(...periods.map((p) => p.periods_elapsed))
   const fraction = Math.min(elapsed / periodsInYear, 1)
 
+  // The engine P&L has gross_profit, ebitda and net_income but NOT
+  // cost_of_goods_sold or operating_expenses. Both follow arithmetically.
+  const planRev = num(planAnnual.revenue)
+  const planGp = num(planAnnual.gross_profit)
+  const planEb = num(planAnnual.ebitda)
+  const derived: Record<string, unknown> = { ...planAnnual }
+  if (derived.cost_of_goods_sold == null && planRev !== null && planGp !== null) {
+    derived.cost_of_goods_sold = planRev - planGp
+  }
+  if (derived.operating_expenses == null && planGp !== null && planEb !== null) {
+    derived.operating_expenses = planGp - planEb
+  }
+  if (derived.net_profit == null && planAnnual.net_income != null) {
+    derived.net_profit = planAnnual.net_income
+  }
+
   const rows: VarianceRow[] = []
   for (const t of TRACKED) {
     const actual = ytdActual(periods, t.key)
-    const annual = num(planAnnual[t.key])
+    const annual = num(derived[t.key])
     const plan = annual === null ? null : annual * fraction
     if (actual === null && plan === null) continue
 
