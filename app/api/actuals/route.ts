@@ -24,7 +24,7 @@ async function resolveOwner(modelInputId: string) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { modelInputId, periodLabel, periodType, planYear, periodsElapsed, incomeStatement } = body
+    const { modelInputId, periodLabel, periodType, planYear, periodsElapsed, incomeStatement, drivers } = body
 
     if (!modelInputId || !periodLabel) {
       return NextResponse.json({ error: "modelInputId and periodLabel are required" }, { status: 400 })
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
         plan_year:        planYear ?? 1,
         periods_elapsed:  periodsElapsed ?? 1,
         income_statement: incomeStatement ?? {},
+        drivers:          drivers ?? {},
         source:           "manual",
         updated_at:       new Date().toISOString(),
       }, { onConflict: "model_input_id,period_label" })
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
     const adminClient = createAdminClient()
     const { data } = await adminClient
       .from("actual_periods")
-      .select("id, period_label, period_type, plan_year, periods_elapsed, income_statement")
+      .select("id, period_label, period_type, plan_year, periods_elapsed, income_statement, drivers")
       .eq("model_input_id", modelInputId)
       .order("period_label", { ascending: true })
 

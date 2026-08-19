@@ -325,7 +325,12 @@ export function ModelDetail({ model, output, subscription }: ModelDetailProps & 
 
         {isComplete && (
           <div className="mb-6">
-            <ActualsPanel modelInputId={model.id} currency={currency} />
+            <ActualsPanel
+              modelInputId={model.id}
+              currency={currency}
+              subType={(model.step2_revenue as Record<string, unknown>)?.businessTypeSub as string | undefined}
+              planDrivers={(model.step2_revenue ?? {}) as Record<string, unknown>}
+            />
           </div>
         )}
 

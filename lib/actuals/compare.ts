@@ -13,6 +13,8 @@ export interface ActualPeriod {
   income_statement?: Record<string, unknown> | null
   balance_sheet?: Record<string, unknown> | null
   cash_flow?: Record<string, unknown> | null
+  /** Operational drivers — optional, supplied only when the user fills them in. */
+  drivers?: Record<string, unknown> | null
 }
 
 export interface VarianceRow {
@@ -110,6 +112,54 @@ export function formatVarianceForPrompt(rows: VarianceRow[], elapsedLabel: strin
     const pct = r.variancePct !== null ? ` (${r.variancePct.toFixed(1)}%)` : ""
     const dir = r.variance === null ? "" : r.variance >= 0 ? "above" : "below"
     lines.push(`  ${r.label}: actual ${Math.round(r.actual)} vs plan ${Math.round(r.plan)} - ${dir} plan${pct}`)
+  }
+  return lines.join("\n")
+}
+
+export interface DriverVarianceRow {
+  key: string
+  label: string
+  actual: number | null
+  plan: number | null
+  variancePct: number | null
+}
+
+/**
+ * Compares operational drivers against the assumptions in step2_revenue.
+ * This is the comparison a chart of accounts cannot support, which is why the
+ * integration-based tools cannot easily do it.
+ *
+ * Takes the LATEST period rather than summing: three months of customer counts
+ * do not add up to anything meaningful.
+ */
+export function diffDrivers(
+  periods: ActualPeriod[],
+  planDrivers: Record<string, unknown>,
+  fields: { key: string; label: string }[]
+): DriverVarianceRow[] {
+  if (periods.length === 0 || fields.length === 0) return []
+  const latest = periods[periods.length - 1]
+  const actuals = (latest.drivers ?? {}) as Record<string, unknown>
+  const rows: DriverVarianceRow[] = []
+  for (const f of fields) {
+    const actual = num(actuals[f.key])
+    if (actual === null) continue
+    const plan = num(planDrivers[f.key])
+    const variancePct =
+      plan !== null && plan !== 0 ? ((actual - plan) / Math.abs(plan)) * 100 : null
+    rows.push({ key: f.key, label: f.label, actual, plan, variancePct })
+  }
+  return rows
+}
+
+/** Compact text form for the board-pack prompt. */
+export function formatDriversForPrompt(rows: DriverVarianceRow[]): string {
+  if (rows.length === 0) return ""
+  const lines: string[] = ["Operational drivers, actual vs assumed:"]
+  for (const r of rows) {
+    const p = r.variancePct !== null ? ` (${r.variancePct.toFixed(1)}%)` : ""
+    const pl = r.plan !== null ? `assumed ${r.plan}` : "no assumption on file"
+    lines.push(`  ${r.label}: actual ${r.actual} vs ${pl}${p}`)
   }
   return lines.join("\n")
 }

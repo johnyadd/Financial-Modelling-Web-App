@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoaderIcon, PlusIcon, TrashIcon, CalendarIcon } from "lucide-react"
+import { getDriverFieldsForSubType } from "@/lib/schemas/assumptions"
 
 const NUMERIC = /^-?\d*\.?\d*$/
 
@@ -27,7 +28,12 @@ interface Period {
   income_statement: Record<string, unknown>
 }
 
-export function ActualsPanel({ modelInputId, currency = "GBP" }: { modelInputId: string; currency?: string }) {
+export function ActualsPanel({ modelInputId, currency = "GBP", subType, planDrivers = {} }: {
+  modelInputId: string
+  currency?: string
+  subType?: string
+  planDrivers?: Record<string, unknown>
+}) {
   const router = useRouter()
   const [periods, setPeriods] = useState<Period[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,6 +45,14 @@ export function ActualsPanel({ modelInputId, currency = "GBP" }: { modelInputId:
   const [planYear, setPlanYear] = useState("1")
   const [elapsed, setElapsed] = useState("")
   const [values, setValues] = useState<Record<string, string>>({})
+  const [driverValues, setDriverValues] = useState<Record<string, string>>({})
+
+  // Revenue-section drivers only — cost assumptions are not operational metrics.
+  const driverFields = subType
+    ? getDriverFieldsForSubType(subType as Parameters<typeof getDriverFieldsForSubType>[0])
+        .filter((a) => a.section === "revenue")
+        .map((a) => ({ key: a.key, label: a.shortLabel ?? a.label, suffix: a.suffix }))
+    : []
 
   async function load() {
     try {
@@ -85,11 +99,16 @@ export function ActualsPanel({ modelInputId, currency = "GBP" }: { modelInputId:
           planYear: Number(planYear) || 1,
           periodsElapsed: Number(elapsed || deriveElapsed(label)) || 1,
           incomeStatement,
+          drivers: Object.fromEntries(
+            Object.entries(driverValues)
+              .filter(([, v]) => v !== "" && Number.isFinite(Number(v)))
+              .map(([k, v]) => [k, Number(v)])
+          ),
         }),
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? "Failed to save"); return }
-      setLabel(""); setElapsed(""); setValues({})
+      setLabel(""); setElapsed(""); setValues({}); setDriverValues({})
       await load()
       router.refresh()
     } catch (err) {
@@ -185,6 +204,29 @@ export function ActualsPanel({ modelInputId, currency = "GBP" }: { modelInputId:
             </div>
           ))}
         </div>
+
+        {driverFields.length > 0 && (
+          <div className="rounded-md border border-border bg-muted/30 p-3 space-y-3">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">Operational drivers</span>
+              {" — optional. Fill these in and the board pack can explain WHY revenue moved,"}
+              {" not just that it did."}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {driverFields.map((d) => (
+                <div key={d.key}>
+                  <label className="text-xs text-muted-foreground">
+                    {d.label}{d.suffix ? ` (${d.suffix})` : ""}
+                  </label>
+                  <Input value={driverValues[d.key] ?? ""} inputMode="decimal"
+                    placeholder={planDrivers[d.key] != null ? `plan ${planDrivers[d.key]}` : "—"}
+                    onChange={(e) => { if (NUMERIC.test(e.target.value)) setDriverValues({ ...driverValues, [d.key]: e.target.value }) }}
+                    className="h-9" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
 
