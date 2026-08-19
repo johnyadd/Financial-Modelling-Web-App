@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import Anthropic from "@anthropic-ai/sdk"
 import { buildInvestorMemoPrompt } from "@/lib/memo/prompts/investor"
 import { buildBoardPackPrompt } from "@/lib/memo/prompts/board"
-import { compareToPlan, formatVarianceForPrompt } from "@/lib/actuals/compare"
+import { compareToPlan, formatVarianceForPrompt, diffDrivers, formatDriversForPrompt } from "@/lib/actuals/compare"
+import { getDriverFieldsForSubType } from "@/lib/schemas/assumptions"
 import type { ActualPeriod } from "@/lib/actuals/compare"
 import { diffInputs, diffOutputs, formatBridgeForPrompt } from "@/lib/scenarios/bridge"
 import { SCENARIO_LABELS } from "@/lib/scenarios/types"
@@ -173,6 +174,17 @@ export async function POST(request: NextRequest) {
         const unit = actuals[0].period_type === "quarter" ? "quarters" : "months"
         periodLabel = `${elapsed} ${unit} to ${actuals[actuals.length - 1].period_label}`
         varianceBlock = formatVarianceForPrompt(rows, periodLabel)
+        // Operational drivers, when supplied, let the narrative say WHY revenue
+        // moved rather than only that it did.
+        const subType = (step2 as Record<string, unknown>).businessTypeSub as string | undefined
+        if (subType) {
+          const fields = getDriverFieldsForSubType(subType as Parameters<typeof getDriverFieldsForSubType>[0])
+            .filter((a) => a.section === "revenue")
+            .map((a) => ({ key: a.key, label: a.shortLabel ?? a.label }))
+          const driverRows = diffDrivers(actuals, step2 as Record<string, unknown>, fields)
+          const driverBlock = formatDriversForPrompt(driverRows)
+          if (driverBlock) varianceBlock += "\n\n" + driverBlock
+        }
       }
     }
 
